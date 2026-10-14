@@ -83,7 +83,7 @@ if require_runtime == "yes" and not re.search(r"flags=.*\bruntime\b", signature)
 info = plistlib.loads((Path(app) / "Contents/Info.plist").read_bytes())
 if info.get("LSMinimumSystemVersion") != "14.0":
     raise SystemExit("Expected the macOS 14.0 deployment floor.")
-print(f"Verified {app}: ad-hoc signature, App Sandbox and macOS 14.0 deployment floor.")
+print(f"Verified {app}: ad-hoc signature, App Sandbox and declared macOS 14.0 deployment floor.")
 if require_runtime == "yes":
     print("Verified Hardened Runtime.")
 PY
