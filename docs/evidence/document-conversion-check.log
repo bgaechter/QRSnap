@@ -1,0 +1,3 @@
+PASS: all 5 original SHA-256 checksums match.
+PASS: all 5 Markdown documents preserve normalized source prose, including contracts and gates.
+Source URLs moved into Markdown links; internal links target converted files.

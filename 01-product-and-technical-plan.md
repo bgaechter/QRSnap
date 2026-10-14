@@ -1,0 +1,136 @@
+# NATIVE macOS SCREEN QR READER — REVIEWED DESIGN
+Planning date: 14 October 2026
+Status: implementation proposal, not a built or runtime-tested application.
+
+## Read This First
+The requested product is a native Mac utility: invoke a shortcut, drag a rectangle over a visible QR code, release, and open its contents in the appropriate system-default application. The same experience should be available from a menu-bar command. [R1]
+
+Evidence convention used throughout this package:
+R = requirement from the user.
+V = a narrowly verified platform fact, recorded in [04-evidence-and-verification.md](04-evidence-and-verification.md).
+D = an explicit proposed product or engineering decision, not an empirical claim.
+U = an unresolved assumption requiring the named experiment before release.
+T = a proposed measurable acceptance target, not a measured result.
+Instructions and acceptance criteria are requirements for future work, not claims that work has already passed. API existence, compilation and successful runtime behaviour are different levels of evidence.
+
+## 1. PRODUCT CONTRACT
+
+**D1.** Build a Swift menu-bar application for macOS 14.0 and later. Use an AppKit application delegate and NSStatusItem; use AppKit panels for selection and SwiftUI hosted views for settings/result UI where convenient. One application target, one test target, Apple frameworks only initially. A macOS 14 deployment target is supported by the chosen API availability and a compile-only probe; actual OS compatibility still requires execution tests. [V2, V11; U1]
+
+**D2.** Start a scan from “Scan QR code…” in the menu or a configurable global shortcut. Proposed initial shortcut: Control-Shift-Q. Its availability is not guaranteed: attempt exclusive registration and expose failure clearly. Keep the menu command usable if registration fails. Do not take over Command-Shift-4 or modify macOS screenshot settings. The reference interaction is documented by Apple. [V1, V7; U2]
+
+**D3.** Interaction:
+  a. With permission available, show a crosshair and a translucent selection overlay on the connected screens.
+  b. Mouse-down chooses the display; drag in any direction to draw a rectangle. Constrain that gesture to its starting display. A code on any connected display is supported by beginning there; a single selection spanning display boundaries is outside v1.
+  c. Release captures that region as it exists at capture time. This is a live selection, not a frozen screenshot of the moment the shortcut was pressed. Show “Select the whole QR code, including its border.”
+  d. Escape cancels without opening anything. A second shortcut press while busy is ignored; no overlapping sessions.
+  e. A nonempty but very small rectangle shows “Select a larger area”; a click without a drag cancels. Proposed minimum: 12 × 12 logical points. This is a UI threshold, not a promise that such a small code decodes. [T1]
+  f. Decode off the main thread. Exactly one readable QR result routes immediately according to D5. Two or more detected QR observations show a small chooser; never silently choose the first. A detected non-text code is labelled unsupported, not misreported as no code.
+  g. No QR: show a small app panel with Retry and Cancel. Capture/permission failures have separate messages. Keep error UI in-app; OS notification permission is unnecessary for this design.
+
+**D4.** Menu items: Scan QR code…, Settings…, Show scanned text files…, About, Quit. Settings initially contain the shortcut and a clear explanation of screen permission and text-file retention. Exclude launch-at-login, auto-updating, QR history databases, camera scanning, OCR, other barcode formats, batch scanning and cloud services from v1. They are not needed for R1.
+
+**D5.** Payload dispatch is an explicit policy; “open anything” is not an implementation specification. Preserve the original decoded string separately from any routing candidate.
+
+```text
+Payload                        Behaviour
+-----------------------------  --------------------------------------------------
+Absolute HTTP/HTTPS URL        Open once using NSWorkspace and the system handler.
+                               Require a scheme and nonempty host; reject control
+                               characters and embedded whitespace in the routing
+                               candidate. Preserve escapes; do not double-encode.
+                               Trim only leading/trailing whitespace for this
+                               classification, not for retained text.
+Other registered URI scheme    Show the decoded destination and app name, then an
+(e.g. mailto, tel, app links)   explicit Open action. Cancel opens nothing.
+file:, javascript:, data:      Do not launch as commands or destinations. Show as
+                               text, with Copy/Open as text available.
+Unregistered/invalid URI       Handle as text; do not guess an application.
+Plain text, Wi-Fi strings,     Write UTF-8 to a uniquely named .txt document and
+vCard text, bare www names     open the default application for that file. No
+                               special Wi-Fi joining or contact import in v1.
+No string payload             Explain that this QR has no supported text payload.
+```
+
+The policy intentionally preserves automatic opening for ordinary web links and text, while requiring a deliberate action for app-specific destinations. HTTP/HTTPS links can still lead to unwanted websites or redirects; this app does not classify websites as trustworthy. Do not add network-based reputation checks or fetch a URL before opening it. [D5; V5–V6]
+
+**D6.** Text-file behaviour: use Application Support/<bundle-id>/Scanned Text, a private directory, random UUID-based .txt filenames and UTF-8 bytes. Never derive filenames from QR content. Use restrictive file permissions where supported. Do not immediately delete the file after the open callback: the receiving editor may still need it. Keep files until the user removes them, and expose their folder through the menu. Explain this retention in onboarding/settings. Do not add automatic deletion with an unverified claim that all editors have finished reading. [U4]
+
+The OS can select its registered .txt application, which might not be TextEdit or even the user's preferred editor. Do not change system defaults or hard-code TextEdit. If no handler exists or opening fails, show the text in the app with Copy and Save… actions. NSWorkspace completion means handoff success/failure; it does not prove that a website loaded or that an editor rendered the file. [V6; U4]
+
+**D7.** Privacy: screenshot pixels stay in process memory and are released after the scan/chooser ends; do not save screenshots or include them in logs. No payloads, full URLs, window titles or screen images in telemetry or diagnostic logs. Do not claim memory is securely erased. Text intentionally opened as a document persists as described above. Browsers/editors have their own history and retention policies. V1 has no analytics or app-originated network requests.
+
+## 2. TECHNICAL DESIGN
+
+**D8.** Keep one process and ordinary source folders rather than a framework per component:
+```text
+  App/                Application delegate, menu, settings and composition.
+  Scan/               @MainActor ScanCoordinator and session state.
+  Selection/          AppKit panels, mouse/keyboard handling, display geometry.
+  Capture/            ScreenCaptureKit adapter and permission adapter.
+  Decode/             Vision adapter on a serial worker.
+  Routing/            Pure payload classifier, NSWorkspace launcher, text store.
+  Tests/              Geometry/routing/session tests and synthetic QR fixtures.
+```
+
+Use small injectable interfaces only at OS side-effect boundaries: capture, decode, launch, text storage and permission queries. A pure geometry function and pure classifier need no service layer. There is no server, database, XPC helper, plug-in framework or dependency-injection container.
+
+**D9.** Session states:
+  idle → permissionNeeded OR selecting → capturing → decoding
+       → choosingResult / confirmingDestination / opening → idle
+Every phase can finish in a user-visible failure; every terminal path cleans up overlays, the crosshair, observers and images. Selection/capture/decode can cancel. Assign a session identifier and ignore callbacks from superseded/cancelled sessions. Check session validity immediately before dispatching a launch. Once NSWorkspace has been called, cancellation cannot reliably retract the external application's action; do not promise it can.
+
+AppKit and Carbon registration stay on the main actor. Run synchronous Vision work on a dedicated serial queue, with a request owned by that job; return immutable result data. Use structured Swift concurrency where APIs support it, but do not hide thread-safety problems with broad @unchecked Sendable annotations. A timeout must invalidate the session and discard late results even if the underlying OS operation cannot be interrupted. [V7; U6]
+
+**D10.** Shortcut implementation: a small HIToolbox RegisterEventHotKey wrapper, kEventHotKeyExclusive, an installed hot-key event handler and unregister/re-register when settings change. Do not build a global keylogger or use event taps to observe all keystrokes. API existence and collision semantics are verified; no-Accessibility/no-Input-Monitoring operation is a hypothesis until a signed app passes the permission test. Reserved system shortcuts and all third-party conflicts are not guaranteed to be detected by the API. [V7; U2]
+
+**D11.** Rectangle selection: one borderless nonactivating NSPanel per NSScreen, with a custom selection view and key handling for Escape. Candidate collection behaviour is canJoinAllSpaces plus fullScreenAuxiliary. Resolve display identity using NSScreenNumber/CGDirectDisplayID and SCDisplay.displayID, not array order. The main-screen shortcut is not a substitute for supporting other displays. Full-screen app, Space and Stage Manager behaviour must pass G0 before this implementation is considered settled. [V8; U3]
+
+Give the coordinator a Selection containing displayID and a display-local, top-left-origin rectangle in logical points. Construct that rectangle through the overlay view/window conversion, not through ad hoc global Y flips. Account for nonzero or negative global display origins. Keep the conversion in one pure GeometryAdapter.
+
+**D12.** Capture: retrieve shareable displays/apps, resolve the selected display by ID, build SCContentFilter(display:excludingApplications:exceptingWindows:) excluding this application's windows, and use SCScreenshotManager.captureImage(contentFilter:configuration:). Set sourceRect explicitly, set cursor/audio capture off, and set output dimensions explicitly from the region size and filter.pointPixelScale. The stream configuration's default size must not silently resize a small QR region. [V2–V4]
+
+This design captures on mouse release while the excluded overlay can remain visible; it does not depend on a fixed “wait 100 ms after hiding” delay. Verify exclusion and frame freshness experimentally. Scanning content displayed by the QR reader itself is not a v1 use case because the app is excluded. Do not capture all displays up front or keep a continuous stream running. If app exclusion or source-rectangle mapping does not work on a supported OS, G0 must record the failure and revise the design; agents must not silently ship a timer workaround. [U1, U3]
+
+The documented source rectangle is in logical display points, whereas output width/height are pixels. The precise mapping from AppKit selection coordinates into ScreenCaptureKit's display source space is a hypothesis until tested against marker images on real display arrangements. Filter pointPixelScale is an input, not a license to multiply every global coordinate by two. [V3; U3]
+
+**D13.** Decode: VNDetectBarcodesRequest, revision 4, symbologies = [.qr], with the CGImage and an explicitly validated orientation. Read all observations and preserve payloadStringValue as optional. Revision 4 is available at the proposed macOS 14 floor. Do not adopt the newer Vision API solely for style if it raises deployment requirements. Do not add a second QR library or image-enhancement pipeline until the fixture suite demonstrates a specific unresolved gap. [V5, V11; U5]
+
+Return a result per observation: stable session-local ID, optional payload text and normalized bounds. Display multiple results in top-to-bottom/left-to-right order after a tested coordinate conversion. Cap rendered preview length, not the payload sent to the chosen app. Use a conservative 64 KiB decoded-string guard as an application resource limit; this is not a claim about QR standard capacity.
+
+**D14.** Permission: explain screen access on first use, before making a permission-triggering call. Use the documented screen-capture preflight/request functions as appropriate and treat actual capture errors as authoritative. Include a truthful screen-capture usage description. A denied permission returns to idle and offers instructions for System Settings; do not repeatedly prompt or edit privacy settings. Recheck after permission changes. Handle revocation and the possibility that relaunch is needed; Apple documents that its sample needs a restart after granting access. [V9; U1]
+
+**D15.** Distribution assumption: first release is a Developer ID-signed, notarized app distributed directly. Start with App Sandbox enabled, no camera/microphone/Accessibility/Apple Events/network entitlements requested by the design, and validate screen capture plus external text handoff in that configuration. Hardened Runtime and appropriate signing are part of release work. If a capability fails, investigate the narrow cause rather than disabling the sandbox or adding broad entitlements by default. Mac App Store review, auto-update support and a login helper are separate future decisions. [V10; U4, U7]
+
+## 3. FAILURE CONTRACT AND ACCEPTANCE TARGETS
+
+**T1.** Cancel/no-op cases: Escape, click-without-drag, display disconnect and session cancellation open zero destinations. Ignore repeated activation until the current session is resolved. No stale result may open after cancellation. Close overlays on every terminal path, including thrown errors.
+
+**T2.** Permissions: demonstrate fresh grant, denial, revoked permission, relaunch recovery and permission already granted. The app must not claim that permission was granted just because an API returned or a settings window was opened.
+
+**T3.** Displays: primary and secondary monitor; a monitor left of or above the primary; 1× and 2× backing scales; scaled display mode; portrait display; full-screen app; Spaces; Stage Manager; attach/detach mid-selection. Where hardware is unavailable, record NOT RUN, not PASS. Coordinate crops must agree with known marker bounds to within one output pixel under the declared rounding convention.
+
+**T4.** Decoding: a committed baseline corpus with HTTP/HTTPS, multiline text, emoji/non-Latin text, percent-encoded URLs, empty/unsupported payload cases, rotated codes, inverted colours, two codes, no code and cropped/damaged negative examples. Require exact text preservation on all supported baseline fixtures. Do not promise arbitrary blurred/damaged QR recovery. Add dense and small examples as characterization tests and report the failure boundary.
+
+**T5.** Dispatch: actual default browser and .txt handler receive the expected value/file once; do not change defaults during tests without explicit test-environment authorization. Unit tests stub launches. Keep integration URLs harmless and synthetic. Test unknown/custom schemes, forbidden schemes, malformed hosts, control characters, percent escapes, open failure and missing handlers.
+
+**T6.** Proposed performance targets, measured on a named reference Mac with permission already granted: p95 shortcut-to-overlay < 250 ms; p95 release-to-launch-request < 1 second for baseline regions up to 2048 × 2048 pixels; visible progress after 300 ms; user-visible timeout at 5 seconds, after which late results are ignored. Exclude user drag time, permission dialogs and external application startup. Report sample count, warm/cold runs and stage timings. These are targets, not current benchmarks. If native-size capture exceeds a 16-megapixel planning limit, ask for a smaller selection rather than silently downsampling; finalize the limit from G0 memory measurements.
+
+**T7.** Privacy: inspect app-created files and logs after URL, text, cancellation and error scans. No screenshots or payload logs; only explicitly routed text documents persist. Test that copied/saved values match the original Unicode text. External application retention is outside the app's guarantees.
+
+**T8.** Accessibility: menu, settings, errors and result chooser must work with keyboard and VoiceOver. Announce selection/cancellation status. Drag selection alone is not a claim of complete nonvisual accessibility; document the limitation and assess keyboard rectangle adjustment after core feasibility, without mislabelling v1 as fully accessible.
+
+## 4. ALTERNATIVES AND SCOPE CONTROL
+
+**D16.** Do nothing / manual screenshot plus another QR reader: viable if usage is rare; no measured usage frequency or time saving was supplied. Building is justified here by the explicitly requested integrated native workflow, not by an invented productivity statistic. Buying an existing utility remains an option, but no comparative market research has been conducted and no superiority claim is made.
+
+**D17.** Shelling out to screencapture -i: useful for a disposable spike but rejected for the production plan because it makes the shell tool's UI, temporary-file/error behaviour and process lifecycle part of the app contract. This is a maintainability tradeoff, not a claim that the tool cannot work. A native overlay earns its complexity only if G0 passes.
+
+**D18.** System content-sharing picker: Apple documents selection of windows, apps and displays; that does not establish the free-form rectangle UX required here. Do not claim it provides a Command-Shift-4 selector. Prefer the custom rectangle only because the requested interaction needs it. [V4]
+
+**D19.** Frozen full-screen capture before selection would avoid some frame changes, but collects a whole display before the rectangle is known and increases image memory. Streaming continuously adds lifecycle and resource work. Neither is needed for the live, single-capture v1 contract.
+
+**D20.** Electron, cloud decoding, a separate daemon, an AI model and a general plug-in dispatch system are rejected because this scoped workflow has native APIs and does not require those components. QR decoding is not an AI-agent inference task at runtime.
+
+## Next Action
+Follow [03-ai-agent-implementation-plan.md](03-ai-agent-implementation-plan.md). G0 is a feasibility gate, not ceremonial documentation. Complete the signed runtime experiments before committing to the overlay/hot-key/sandbox assumptions. This planning session performed source checks and compilation only; it did not capture the user's screen, request screen access, register a shortcut, open test URLs, build an app bundle or test a signed release.

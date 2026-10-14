@@ -1,0 +1,122 @@
+[
+  {
+    "file" : "https.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "https://example.com/qr"
+    ]
+  },
+  {
+    "file" : "http.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "http://example.com/"
+    ]
+  },
+  {
+    "file" : "unicode.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "Grüezi · 日本語 · العربية · 🐱"
+    ]
+  },
+  {
+    "file" : "multiline.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "First line\nSecond line\r\n  trailing spaces  \n"
+    ]
+  },
+  {
+    "file" : "escapes.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "https://example.com/a%2Fb?q=hello%20world#part"
+    ]
+  },
+  {
+    "file" : "custom.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "qrsnap-test://example/confirm?value=1"
+    ]
+  },
+  {
+    "file" : "mailto.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "mailto:qr@example.com"
+    ]
+  },
+  {
+    "file" : "credentials-text.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "Synthetic token: test-only-123\nNever a real secret"
+    ]
+  },
+  {
+    "file" : "wifi-text.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "WIFI:T:WPA;S:Synthetic;P:test-only;;"
+    ]
+  },
+  {
+    "file" : "rotated.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "https://example.com/rotated"
+    ]
+  },
+  {
+    "file" : "inverted.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "https://example.com/inverted"
+    ]
+  },
+  {
+    "file" : "multiple.png",
+    "kind" : "baseline",
+    "payloads" : [
+      "https://example.com/top",
+      "https://example.com/bottom"
+    ]
+  },
+  {
+    "file" : "no-code.png",
+    "kind" : "negative",
+    "payloads" : [
+
+    ]
+  },
+  {
+    "file" : "cropped.png",
+    "kind" : "characterization",
+    "payloads" : [
+
+    ]
+  },
+  {
+    "file" : "dense.png",
+    "kind" : "characterization",
+    "payloads" : [
+      "Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; Dense synthetic payload 0123456789; "
+    ]
+  },
+  {
+    "file" : "small.png",
+    "kind" : "characterization",
+    "payloads" : [
+      "https://example.com/small"
+    ]
+  },
+  {
+    "file" : "damaged.png",
+    "kind" : "characterization",
+    "payloads" : [
+
+    ]
+  }
+]

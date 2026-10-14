@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>QRSnap</string>
+<key>CFBundleIdentifier</key><string>local.benny.QRSnap</string>
+<key>CFBundleName</key><string>QRSnap</string>
+<key>CFBundleDisplayName</key><string>QRSnap Feasibility</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.1.0</string>
+<key>CFBundleVersion</key><string>1</string>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSUIElement</key><true/>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSScreenCaptureUsageDescription</key><string>QRSnap captures the screen area you select to read its QR codes locally. Captured images are not saved.</string>
+</dict></plist>

@@ -1,0 +1,27 @@
+[
+  {
+    "source": "docs/originals/00-READ-ME.txt",
+    "markdown": "00-READ-ME.md",
+    "sha256": "4174dd56579040bb7b4100bb407cb90576dc30c333643a2e980d1dc0977009ce"
+  },
+  {
+    "source": "docs/originals/01-product-and-technical-plan.txt",
+    "markdown": "01-product-and-technical-plan.md",
+    "sha256": "88ade303e8fb6d3a879fabde94eae5d54cb67f4ce2863e36769211f086a3a65c"
+  },
+  {
+    "source": "docs/originals/02-adversarial-review.txt",
+    "markdown": "02-adversarial-review.md",
+    "sha256": "e7fc3870b9d9e129577e2813da5ce8f41f649949e7351dff0c76092e065f8d5d"
+  },
+  {
+    "source": "docs/originals/03-ai-agent-implementation-plan.txt",
+    "markdown": "03-ai-agent-implementation-plan.md",
+    "sha256": "59132636cc82df3bb4f8b16431bfcc456bb789680ad1c23e1f14634c4839f18f"
+  },
+  {
+    "source": "docs/originals/04-evidence-and-verification.txt",
+    "markdown": "04-evidence-and-verification.md",
+    "sha256": "3ed66f08b1ab10f2d0af986b83fb63f9adb36e78150494e992f6c9de37bf29b2"
+  }
+]
