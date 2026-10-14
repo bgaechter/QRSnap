@@ -11,7 +11,7 @@ Initializer dependencies are `capture`, `decoder`, an optional `progressDelay` (
 | API | Contract |
 | --- | --- |
 | `sessionID`, `phase`, `results` | Read-only current state; results are immutable value observations, with optional payload preserved. |
-| `beginSelection() -> UUID?` | Starts exactly one session; returns nil while any session is active. Selection time has no processing deadline. |
+| `beginSelection() -> UUID?` | Starts exactly one session; returns nil while busy or if the synchronous selecting callback cancels/replaces the new token. Selection time has no processing deadline. |
 | `submit(_ selection: Selection) -> Bool` | Accepts the current selecting token once. Starts asynchronous capture and then decoding, with one shared processing deadline. |
 | `cancel(sessionID:) -> Bool` | Invalidates the token immediately, cancels owned tasks and emits exactly one terminal event. |
 | `displayDidChange(sessionID:) -> Bool` | Same cleanup with `.failed(.displayChanged)`. |

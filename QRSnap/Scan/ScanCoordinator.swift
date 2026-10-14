@@ -60,7 +60,9 @@ import Foundation
     @discardableResult public func beginSelection() -> UUID? {
         guard let token = lifecycle.begin() else { return nil }
         onEvent(.selecting(token))
-        return token
+        // Selection handlers may synchronously cancel or replace the session. Do not
+        // authorize the caller to present an overlay for a token that is already stale.
+        return lifecycle.contains(token) ? token : nil
     }
 
     /// Accepts a selection once, and only from the active session.

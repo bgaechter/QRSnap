@@ -365,6 +365,31 @@ private struct UnknownScanError: Error {}
     }
 
     func testEventReentrancyCannotPublishCancelledResultsOrInvalidateRetry() async throws {
+        for replace in [false, true] {
+            let selecting = ScanHarness()
+            var cancelledToken: UUID?
+            var replacementToken: UUID?
+            selecting.events.observer = { [weak selecting] event in
+                guard let selecting, case .selecting(let token) = event else { return }
+                selecting.events.observer = nil
+                cancelledToken = token
+                selecting.coordinator.cancel(sessionID: token)
+                if replace { replacementToken = selecting.coordinator.beginSelection() }
+            }
+            XCTAssertNil(selecting.coordinator.beginSelection())
+            let old = try XCTUnwrap(cancelledToken)
+            XCTAssertEqual(selecting.events.finished(old), [.cancelled])
+            XCTAssertEqual(selecting.coordinator.sessionID, replacementToken)
+            if replace {
+                let replacement = try XCTUnwrap(replacementToken)
+                XCTAssertNotEqual(old, replacement)
+                XCTAssertEqual(selecting.coordinator.phase, .selecting)
+                selecting.coordinator.cancel(sessionID: replacement)
+            } else {
+                XCTAssertEqual(selecting.coordinator.phase, .idle)
+            }
+        }
+
         let h = ScanHarness()
         let token = try await h.startDecode()
         await h.sleeper.fire(.milliseconds(300))
