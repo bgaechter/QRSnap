@@ -50,3 +50,7 @@ The dispatcher head `19d3eb2` and coordinator head `a83c44a` were merged while p
 - `./scripts/build-app.sh`: **PASS**, the combined sources compile for arm64 with the macOS 14 deployment target; the sandboxed ad-hoc signed app passes strict signature verification. See the [combined build log](evidence/combined-core-build.log). The app was not launched.
 - `plutil -lint QRSnap.xcodeproj/project.pbxproj`: **PASS**. Shared scheme XML parses; source/test registration inspection confirms all 42 standalone methods appear exactly once.
 - Full Xcode/XCTest, signed GUI workflow, real default-application access, deployment-floor execution, and G0/G3/G4 acceptance: **NOT RUN** by this integration. The coordinator and dispatcher are compiled and tested together, but remain independent components awaiting production composition and its runtime gates.
+
+## Rebase after coordinator integration
+
+PR #2 was squash-merged into `main` at `37cd0b07200b8c7e1fcaeb1e254998965d2e3843`. PR #3 is now rebased directly onto that commit and targets `main`; its old coordinator commits are no longer included in the PR history. Shared project, runner and README conflicts were resolved to the previously verified combined contents. Before this note was added, the entire rebased tree matched the former PR head `102b2796b4b2da10334b116adab349d078e443db` exactly, including the combined test/build evidence. No implementation changed, so the existing 42-method validation remains applicable.
