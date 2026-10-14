@@ -36,8 +36,8 @@ Current-session validity and Swift task cancellation are checked before preparat
 - `./scripts/build-app.sh`: **PASS**, complete Swift 6 app compilation for arm64 with deployment target macOS 14, ad-hoc signing and strict signature verification. This does not launch the app or prove deployment-floor execution.
 - Full Xcode/XCTest, real browser/editor handoff through this adapter, and end-to-end app routing: **NOT RUN**. The adapter is not composed into the running app while G0 remains open.
 
-The integrator owns registration of the 13 methods in the shared standalone runner and regeneration of the Xcode project. Source ownership for this task is limited to `PayloadDispatcher.swift`, `WorkspacePayloadLauncher.swift`, `PayloadDispatcherTests.swift`, and this handoff.
+The final branch also registers the 13 methods in the shared standalone runner and regenerates the Xcode project. Application composition remains a later integration task.
 
 ## Integrator registration
 
-The shared standalone runner and generated Xcode project now include all thirteen dispatcher test methods. The full fixture suite is executed by the integrator before PR publication. This branch is stacked on `feature/initial-feasibility`. Real UI dispatch remains disabled pending G0.
+The shared standalone runner and generated Xcode project now include all thirteen dispatcher test methods. The checked-in runner passed the full fixture suite: **32 methods, zero assertion failures**, including the two Vision methods. See [test log](evidence/dispatch-tests.log). The generated project passes `plutil -lint`, and the signed application build passes strict signature verification. This branch is stacked on `feature/initial-feasibility`. Real UI dispatch remains disabled pending G0.
