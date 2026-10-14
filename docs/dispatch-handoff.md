@@ -1,6 +1,6 @@
 # Payload dispatch contract handoff — 14 October 2026
 
-This change is independent policy and adapter work on `feature/payload-dispatch`, stacked on `feature/initial-feasibility`. It does not connect automatic routing to the feasibility app. G0 and G3 remain open: mocked dispatch success and compilation do not establish sandboxed default-application access, correct rendering in a receiving app, or end-to-end scan behavior.
+This change is independent policy and adapter work on `feature/payload-dispatch`, now stacked on `feature/scan-coordinator` at `a83c44a` so both core suites share one verified runner and generated project. The initial feasibility PR has been merged into `main`. It does not connect automatic routing to the feasibility app. G0 and G3 remain open: mocked dispatch success and compilation do not establish sandboxed default-application access, correct rendering in a receiving app, or end-to-end scan behavior.
 
 ## Implemented contract
 
@@ -40,4 +40,13 @@ The final branch also registers the 13 methods in the shared standalone runner a
 
 ## Integrator registration
 
-The shared standalone runner and generated Xcode project now include all thirteen dispatcher test methods. The checked-in runner passed the full fixture suite: **32 methods, zero assertion failures**, including the two Vision methods. See [test log](evidence/dispatch-tests.log). The generated project passes `plutil -lint`, and the signed application build passes strict signature verification. This branch is stacked on `feature/initial-feasibility`. Real UI dispatch remains disabled pending G0.
+At the first dispatcher publication, the shared standalone runner and generated Xcode project included all thirteen dispatcher test methods. That checked-in runner passed the full fixture suite: **32 methods, zero assertion failures**, including the two Vision methods. See the preserved [dispatcher test log](evidence/dispatch-tests.log). The generated project passed `plutil -lint`, and the signed application build passed strict signature verification. The branch was then stacked on `feature/initial-feasibility`. Real UI dispatch remains disabled pending G0.
+
+## Combined core verification
+
+The dispatcher head `19d3eb2` and coordinator head `a83c44a` were merged while preserving both parent histories. The shared runner includes both suites exactly once, the README reports 40 core methods and 42 full-suite methods, and the Xcode project was regenerated from all combined source/test files. The dispatch PR now depends on the coordinator PR; while that dependency is unmerged its base is `feature/scan-coordinator`. Once the coordinator is integrated, the dispatch PR can target `main`.
+
+- `./scripts/test.sh`: **PASS**, 42 methods and zero assertion failures, including all 13 dispatcher methods, all 10 coordinator methods, the 17 existing core methods and both Vision fixture methods. See the [combined test log](evidence/combined-core-tests.log). No test opens an external application or requests screen permission.
+- `./scripts/build-app.sh`: **PASS**, the combined sources compile for arm64 with the macOS 14 deployment target; the sandboxed ad-hoc signed app passes strict signature verification. See the [combined build log](evidence/combined-core-build.log). The app was not launched.
+- `plutil -lint QRSnap.xcodeproj/project.pbxproj`: **PASS**. Shared scheme XML parses; source/test registration inspection confirms all 42 standalone methods appear exactly once.
+- Full Xcode/XCTest, signed GUI workflow, real default-application access, deployment-floor execution, and G0/G3/G4 acceptance: **NOT RUN** by this integration. The coordinator and dispatcher are compiled and tested together, but remain independent components awaiting production composition and its runtime gates.
