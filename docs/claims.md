@@ -2,7 +2,7 @@
 
 **A0 is started, not accepted. G0 remains open.** A1 has independent core/fixture evidence. A2–A6 acceptance is pending. Original planning evidence remains in [04-evidence-and-verification.md](../04-evidence-and-verification.md); do not confuse it with implementation results here.
 
-Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, selected developer directory `/Library/Developer/CommandLineTools`. The workspace is not a Git checkout, so there is no commit ID. [Source hashes](evidence/source-sha256.json) identify the implementation tested in this handoff.
+Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, selected developer directory `/Library/Developer/CommandLineTools`. The initial checks predated Git initialization; their [source hashes](evidence/source-sha256.json) remain the historical baseline. That source was committed as `003010af49c16f40c79c00420b42074e8dda11c6` and merged through PR #1. The later [runtime record](runtime-verification.md) identifies the tested controls-window change and exact executable separately.
 
 | Check | Actual result | Evidence / limitation |
 | --- | --- | --- |
@@ -15,8 +15,8 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 | Vision characterization | OBSERVED | Dense (1, exact), small (1, exact), cropped (0), damaged (0). Four isolated samples do not locate a general reliability boundary. |
 | Full standalone suite | PASS | [19 methods, zero assertion failures](evidence/contract-tests.log), using graphics-service access outside the agent command sandbox. No test opens another application. |
 | Empty/binary observations | PARTIAL | Pure nil/empty classification covered. No real binary/empty QR observation fixture yet. |
-| G0 capture/permission/shortcut/Spaces | NOT RUN | App was built, not launched. Need controlled GUI environment and signed runtime evidence. |
-| G0 external `.txt` access | NOT RUN | Storage bytes/permissions tested; sandboxed default editor handoff not exercised. |
+| G0 capture/permission/shortcut/Spaces | PARTIAL / BLOCKED | Explicit explanation and Cancel observed. Preflight still reports unavailable after authorized exact-build grant and relaunch; no capture occurred. Shortcut/Spaces NOT RUN. [Runtime record](runtime-verification.md). |
+| G0 external `.txt` access | PASS on this host | Explicit synthetic test opened in default TextEdit; Unicode/multiline display, exact bytes, 0600/0700 and retention after QRSnap relaunch verified. Other editors/OS versions NOT RUN. [Runtime record](runtime-verification.md). |
 | Production coordinator races | NOT RUN | Session value is tested. Delayed fake capture/decode/launcher integration belongs to A4. |
 | G2 display/OS matrix, T6 timing, T8 accessibility | NOT RUN | Need hardware/OS matrix, 30-run measurements, and keyboard/VoiceOver checks. |
 | G6 release | NOT RUN | Full Xcode, chosen release signing identity, release authorization and clean installation tests required. |
@@ -25,7 +25,7 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 
 - **U1 / U3:** open. Experimental capture and selector compile; crop mapping, overlay exclusion, permission flow, scene freshness and desktop behavior require the [manual matrix](manual-tests.md).
 - **U2:** open. Exclusive Carbon wrapper compiles. No background shortcut, collision, alternate-layout or permission behavior claim.
-- **U4:** partially supported by storage tests. Default editor access from the signed sandbox app remains untested.
+- **U4:** supported on this host by signed sandbox runtime handoff to TextEdit, visual content, exact UTF-8 and retained-file checks. Other default editors and OS versions remain open.
 - **U5:** native Vision supports the current synthetic baseline on this host. Deployment-floor coverage and unsupported-payload fixtures remain open; G1 is not fully accepted.
 - **U6:** session identity invariants pass. End-to-end late-callback/launch tests and performance remain open.
 - **U7:** local signed build exists. Distribution and runtime sandbox acceptance remain open.

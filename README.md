@@ -28,7 +28,7 @@ These Xcode commands have **not been executed** on the current Command Line Tool
 
 ## Try the feasibility proof
 
-Open `build/QRSnap.app` when ready to run the [manual checks](docs/manual-tests.md). It adds a QR icon to the menu bar.
+Open `build/QRSnap.app` when ready to run the [manual checks](docs/manual-tests.md). It adds a QR icon to the menu bar and opens a small controls window with Scan and text-test actions. Reopen it with **Show test controls…**; launching the app alone requests no access or capture.
 
 1. Put a synthetic fixture from `QRSnapTests/Fixtures` in Preview or another application. QRSnap excludes its own windows from capture.
 2. Choose **Scan QR code…**. The app explains screen access before offering to request it. Granting, denying, revoking, and relaunching need separate manual verification.
@@ -42,7 +42,7 @@ The proof displays scan results. Automatic URL/text dispatch, custom-scheme conf
 
 Captured pixels stay in memory, including the proof preview until it closes. Screenshot files are not written. The only intentionally persistent app documents are text files under Application Support / `local.benny.QRSnap` / `Scanned Text` (inside the app container when sandboxed). **Files remain until the user removes them.** The menu exposes their folder. Their names are random UUIDs; UTF-8 content is preserved. Other applications have their own retention policies.
 
-This build makes no app-originated network requests and contains no analytics or payload logging. The initial selection limit is 16 million output pixels, subject to G0 memory measurements. A gesture cannot span displays. Drag selection is not fully accessible to nonvisual users. macOS 14 compatibility, external displays, Spaces, Stage Manager, permission changes, default-app handoff and release signing remain unverified.
+This build makes no app-originated network requests and contains no analytics or payload logging. The initial selection limit is 16 million output pixels, subject to G0 memory measurements. A gesture cannot span displays. Drag selection is not fully accessible to nonvisual users. The [local runtime record](docs/runtime-verification.md) verifies a synthetic TextEdit handoff on this host. Screen access still reports unavailable after authorization and relaunch, so crop/exclusion checks remain blocked. macOS 14 compatibility, external displays, Spaces, Stage Manager, the full permission matrix, other default apps and release signing remain unverified.
 
 ## Project layout
 

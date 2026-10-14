@@ -13,6 +13,7 @@ import AppKit
     private var timeoutTask: Task<Void, Never>?
     private var progressTask: Task<Void, Never>?
     private var reportWindow: NSWindow?
+    private var controlsWindow: NSWindow?
     private var shortcutEnabled = false
     private var handoffBusy = false
 
@@ -21,6 +22,7 @@ import AppKit
         statusItem.button?.image = NSImage(systemSymbolName: "qrcode.viewfinder", accessibilityDescription: "QRSnap")
         let menu = NSMenu()
         add("Scan QR code…", #selector(scan), to: menu)
+        add("Show test controls…", #selector(showControls), to: menu)
         add("Enable test shortcut (⌃⇧Q)", #selector(toggleShortcut(_:)), to: menu)
         add("Cancel current scan", #selector(cancel), to: menu)
         menu.addItem(.separator())
@@ -33,6 +35,57 @@ import AppKit
         shortcut.onInvoke = { [weak self] in self?.scan() }
         overlay.cancelRequested = { [weak self] in self?.cancel() }
         overlay.displayChanged = { [weak self] in self?.fail(.displayChanged) }
+        showControls()
+    }
+
+    // A visible, keyboard-accessible entry point for the bounded feasibility build.
+    // No permission, shortcut registration, or capture occurs merely by opening it.
+    @objc private func showControls() {
+        if let controlsWindow {
+            NSApp.activate(ignoringOtherApps: true)
+            controlsWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 350),
+                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        window.title = "QRSnap — Feasibility checks"
+        window.isReleasedWhenClosed = false
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 16
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        let title = NSTextField(labelWithString: "Read a QR code from your screen")
+        title.font = .systemFont(ofSize: 21, weight: .semibold)
+        let detail = NSTextField(wrappingLabelWithString: "Open a synthetic QR image in another application, then choose Scan. Screen access is requested only after you continue. Captured images stay in memory; this proof displays results without opening QR destinations.")
+        let scanButton = NSButton(title: "Scan QR code…", target: self, action: #selector(scan))
+        scanButton.bezelStyle = .rounded
+        scanButton.keyEquivalent = "\r"
+        let textButton = NSButton(title: "Test default text application…", target: self, action: #selector(testTextHandoff))
+        textButton.bezelStyle = .rounded
+        let help = NSTextField(wrappingLabelWithString: "Control-Shift-Q can be enabled from the QR menu-bar icon. Text test documents are retained until you remove them; use Show scanned text files from the menu.")
+        help.textColor = .secondaryLabelColor
+        for view in [title, detail, scanButton, textButton, help] { stack.addArrangedSubview(view) }
+        let content = NSView()
+        content.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -24),
+            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 24),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -24),
+            detail.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            help.widthAnchor.constraint(equalTo: stack.widthAnchor)
+        ])
+        window.contentView = content
+        window.center()
+        controlsWindow = window
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showControls()
+        return true
     }
 
     private func add(_ title: String, _ selector: Selector, to menu: NSMenu) {
@@ -57,6 +110,7 @@ import AppKit
             }
             return
         }
+        controlsWindow?.orderOut(nil)
         guard let token = session.begin() else { return }
         overlay.show(sessionID: token) { [weak self] result in
             guard let self, self.session.contains(token) else { return }
