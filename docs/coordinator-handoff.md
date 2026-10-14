@@ -1,6 +1,6 @@
 # Scan coordinator implementation handoff
 
-Task: `feature/scan-coordinator`, stacked on `feature/initial-feasibility` at `003010a`. The integrator owns publication, project generation, test-runner registration and application composition. This branch adds only `QRSnap/Scan/ScanCoordinator.swift`, `QRSnapTests/ScanCoordinatorTests.swift`, and this record.
+Task: `feature/scan-coordinator`, stacked on `feature/initial-feasibility` at `003010a`. The branch adds the coordinator and its tests, registers them in the standalone runner and generated Xcode project, and records verification evidence. Application composition remains a later integration task.
 
 ## Behavior and interface
 
@@ -34,10 +34,10 @@ Environment: arm64 macOS host, Swift 6 compilation targeting macOS 14 using the 
 
 - `./scripts/test.sh --core-only`: PASS, 17 existing standalone methods, zero assertion failures; also compiles the new coordinator/tests.
 - Temporary ignored `.build/CoordinatorStandaloneRunner.swift`, derived from the existing runner with the ten methods below registered: PASS, 27 total methods, zero assertion failures. Built with `xcrun swiftc -parse-as-library -swift-version 6 -D STANDALONE_TESTS -target arm64-apple-macosx14.0` and the same source set as `scripts/test.sh`; ran `.build/coordinator-contract-tests --core-only`.
-- `./scripts/build-app.sh`: PASS, arm64 application compiled and its ad-hoc sandboxed signature verified. The shared Xcode project is unchanged and requires integrator regeneration.
+- `./scripts/build-app.sh`: PASS, arm64 application compiled and its ad-hoc sandboxed signature verified. The integrator subsequently regenerated the shared Xcode project.
 - Full Xcode/XCTest, signed GUI coordinator workflow, actual capture/permission/display/launch integration, macOS 14 execution, T6 performance measurement and release validation: NOT RUN. Existing G0 gates remain open.
 
-The following `ScanCoordinatorTests` methods need registration in the shared standalone runner (XCTest discovery uses their normal test names):
+The following `ScanCoordinatorTests` methods are registered in the shared standalone runner (XCTest discovery uses their normal test names):
 
 1. `testBusyInvocationAndSelectionIdentityAreGuarded`
 2. `testCancellationDiscardsLateCaptureAndKeepsNewSession`
@@ -54,4 +54,4 @@ Fakes intentionally complete capture/decode and timers after cancellation. Tests
 
 ## Integrator registration
 
-The shared standalone runner and generated Xcode project now include all ten coordinator test methods. The full fixture suite is executed by the integrator before PR publication. This branch is stacked on `feature/initial-feasibility`. G0 and app composition remain open.
+The shared standalone runner and generated Xcode project now include all ten coordinator test methods. The checked-in runner passed the full fixture suite: **29 methods, zero assertion failures**, including the two Vision methods. See [test log](evidence/coordinator-tests.log). The generated project passes `plutil -lint`, and the signed application build passes strict signature verification. This branch is stacked on `feature/initial-feasibility`. G0 and app composition remain open.
