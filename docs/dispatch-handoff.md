@@ -37,3 +37,7 @@ Current-session validity and Swift task cancellation are checked before preparat
 - Full Xcode/XCTest, real browser/editor handoff through this adapter, and end-to-end app routing: **NOT RUN**. The adapter is not composed into the running app while G0 remains open.
 
 The integrator owns registration of the 13 methods in the shared standalone runner and regeneration of the Xcode project. Source ownership for this task is limited to `PayloadDispatcher.swift`, `WorkspacePayloadLauncher.swift`, `PayloadDispatcherTests.swift`, and this handoff.
+
+## Integrator registration
+
+The shared standalone runner and generated Xcode project now include all thirteen dispatcher test methods. The full fixture suite is executed by the integrator before PR publication. This branch is stacked on `feature/initial-feasibility`. Real UI dispatch remains disabled pending G0.
