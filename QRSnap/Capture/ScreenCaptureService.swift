@@ -1,5 +1,9 @@
 import AppKit
-import ScreenCaptureKit
+// The macOS 15 SDK lacks Sendable annotations for SCShareableContent.
+// Application-side use of its read-only snapshot stays in this MainActor adapter;
+// no content references are stored or shared with other application tasks.
+// Keep this legacy SDK workaround local; see docs/ci.md.
+@preconcurrency import ScreenCaptureKit
 
 @MainActor final class ScreenPermissionService: ScreenPermissionChecking {
     var isGranted: Bool { CGPreflightScreenCaptureAccess() }
