@@ -91,6 +91,9 @@ struct TestFailure: Error {}
         await run("coordinator.testDisplayChangeCancelsSelectionCaptureDecodeAndReview", coordinator.testDisplayChangeCancelsSelectionCaptureDecodeAndReview)
         await run("coordinator.testSingleAndMultipleResultsPreserveObservationsAndOpeningIsOnceOnly", coordinator.testSingleAndMultipleResultsPreserveObservationsAndOpeningIsOnceOnly)
         await run("coordinator.testEventReentrancyCannotPublishCancelledResultsOrInvalidateRetry", coordinator.testEventReentrancyCannotPublishCancelledResultsOrInvalidateRetry)
+        let markers = G0MarkerEvidenceTests()
+        await run("g0.markers-and-phase", markers.testKnownMarkerEdgesAndFramePhase)
+        await run("g0.non-fixture", markers.testNonFixtureDoesNotClaimMarkerEvidence)
         if !CommandLine.arguments.contains("--core-only") {
             let decoder = DecoderFixtureTests()
             await run("vision.baseline", decoder.testSupportedBaselineAndNegativeImages)

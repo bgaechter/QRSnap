@@ -16,6 +16,9 @@ import AppKit
     private var controlsWindow: NSWindow?
     private var shortcutEnabled = false
     private var handoffBusy = false
+    private var permissionCheckBusy = false
+    private var shortcutButton: NSButton?
+    private var shortcutMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -23,7 +26,9 @@ import AppKit
         let menu = NSMenu()
         add("Scan QR code…", #selector(scan), to: menu)
         add("Show test controls…", #selector(showControls), to: menu)
+        add("Diagnose screen access…", #selector(diagnoseScreenAccess), to: menu)
         add("Enable test shortcut (⌃⇧Q)", #selector(toggleShortcut(_:)), to: menu)
+        shortcutMenuItem = menu.items.last
         add("Cancel current scan", #selector(cancel), to: menu)
         menu.addItem(.separator())
         add("Open synthetic text in default app…", #selector(testTextHandoff), to: menu)
@@ -46,7 +51,7 @@ import AppKit
             controlsWindow.makeKeyAndOrderFront(nil)
             return
         }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 350),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 470),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "QRSnap — Feasibility checks"
         window.isReleasedWhenClosed = false
@@ -63,9 +68,16 @@ import AppKit
         scanButton.keyEquivalent = "\r"
         let textButton = NSButton(title: "Test default text application…", target: self, action: #selector(testTextHandoff))
         textButton.bezelStyle = .rounded
+        let diagnosticButton = NSButton(title: "Diagnose screen access…", target: self, action: #selector(diagnoseScreenAccess))
+        diagnosticButton.bezelStyle = .rounded
+        let shortcutButton = NSButton(checkboxWithTitle: "Enable test shortcut (⌃⇧Q)", target: self, action: #selector(toggleShortcut(_:)))
+        shortcutButton.state = shortcutEnabled ? .on : .off
+        self.shortcutButton = shortcutButton
+        let quitButton = NSButton(title: "Quit QRSnap", target: self, action: #selector(quit))
+        quitButton.bezelStyle = .rounded
         let help = NSTextField(wrappingLabelWithString: "Control-Shift-Q can be enabled from the QR menu-bar icon. Text test documents are retained until you remove them; use Show scanned text files from the menu.")
         help.textColor = .secondaryLabelColor
-        for view in [title, detail, scanButton, textButton, help] { stack.addArrangedSubview(view) }
+        for view in [title, detail, scanButton, diagnosticButton, shortcutButton, textButton, help, quitButton] { stack.addArrangedSubview(view) }
         let content = NSView()
         content.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -95,7 +107,7 @@ import AppKit
     }
 
     @objc private func scan() {
-        guard session.phase == .idle else { return }
+        guard session.phase == .idle, !permissionCheckBusy else { return }
         reportWindow?.close()
         guard permission.isGranted else {
             let prompt = NSAlert()
@@ -119,6 +131,23 @@ import AppKit
             case .failure(let failure): self.fail(failure)
             case .success(let selection?): self.runCapture(selection)
             }
+        }
+    }
+
+    @objc private func diagnoseScreenAccess() {
+        guard session.phase == .idle, !permissionCheckBusy else { return }
+        let prompt = NSAlert()
+        prompt.messageText = "Check screen access without capturing pixels"
+        prompt.informativeText = "This asks ScreenCaptureKit whether shareable content is available and reports only permission status and a numeric error code. macOS may ask for screen permission. No window names or screen content are displayed or saved."
+        prompt.addButton(withTitle: "Check access")
+        prompt.addButton(withTitle: "Cancel")
+        guard prompt.runModal() == .alertFirstButtonReturn else { return }
+        permissionCheckBusy = true
+        Task { [weak self] in
+            guard let self else { return }
+            let report = await permission.diagnostic()
+            permissionCheckBusy = false
+            message("Screen access diagnostic", report)
         }
     }
 
@@ -204,7 +233,8 @@ import AppKit
         let text = NSTextView()
         text.isEditable = false
         text.isSelectable = true
-        text.string = "\(details)\n\nFeasibility build: QR destinations are displayed here. Automatic routing will be integrated after the runtime checks pass. Close this window to release the preview."
+        let markers = G0MarkerEvidence.describe(frame.image).map { "\n\n\($0)" } ?? ""
+        text.string = "\(details)\(markers)\n\nFeasibility build: QR destinations are displayed here. Automatic routing will be integrated after the runtime checks pass. Close this window to release the preview."
         text.font = .systemFont(ofSize: 14)
         let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
@@ -226,19 +256,19 @@ import AppKit
         reportWindow = nil
     }
 
-    @objc private func toggleShortcut(_ item: NSMenuItem) {
+    @objc private func toggleShortcut(_ sender: Any) {
         if shortcutEnabled {
             shortcut.unregister()
             shortcutEnabled = false
-            item.state = .off
         } else {
             let status = shortcut.register()
             shortcutEnabled = status == noErr
-            item.state = shortcutEnabled ? .on : .off
             if !shortcutEnabled {
                 message("Shortcut unavailable", "Control-Shift-Q could not be registered (status \(status)). Use the Scan menu command. Registration does not detect every possible shortcut conflict.")
             }
         }
+        shortcutMenuItem?.state = shortcutEnabled ? .on : .off
+        shortcutButton?.state = shortcutEnabled ? .on : .off
     }
 
     private var textDirectory: URL {

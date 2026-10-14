@@ -9,7 +9,7 @@ let package = Package(
     targets: [
         .target(name: "QRSnapCore", path: "QRSnap",
                 exclude: ["App", "Capture", "Selection/SelectionOverlay.swift"],
-                sources: ["Scan", "Selection/GeometryAdapter.swift", "Routing", "Decode"]),
+                sources: ["Scan", "Selection/GeometryAdapter.swift", "Selection/G0MarkerEvidence.swift", "Routing", "Decode"]),
         .testTarget(name: "QRSnapCoreTests", dependencies: ["QRSnapCore"],
                     path: "QRSnapTests", exclude: ["Support"], resources: [.copy("Fixtures")])
     ]

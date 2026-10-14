@@ -8,6 +8,22 @@ import AppKit
 @MainActor final class ScreenPermissionService: ScreenPermissionChecking {
     var isGranted: Bool { CGPreflightScreenCaptureAccess() }
     func request() -> Bool { CGRequestScreenCaptureAccess() }
+
+    /// Explicit feasibility diagnostic only. Enumerates no content in the report,
+    /// captures no pixels, and does not treat a successful query as capture success.
+    func diagnostic() async -> String {
+        let before = isGranted
+        let result: String
+        do {
+            _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+            result = "ScreenCaptureKit shareable-content query: accepted."
+        } catch {
+            let error = error as NSError
+            let category = error.domain == SCStreamErrorDomain ? "SCStreamErrorDomain" : "other domain"
+            result = "ScreenCaptureKit shareable-content query: failed (\(category), code \(error.code))."
+        }
+        return "Screen preflight before: \(before).\n\(result)\nScreen preflight after: \(isGranted).\n\nNo pixels were captured. A successful query does not prove a successful capture."
+    }
 }
 
 @MainActor enum DisplayInventory {
