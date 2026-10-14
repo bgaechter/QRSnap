@@ -1,6 +1,6 @@
 # macOS pull-request validation
 
-The `macOS validation` workflow runs on pull requests, including stacked PRs targeting a feature branch, and pushes to `main`. Pull requests test GitHub's proposed merge commit. A manual run is available once the workflow is on the default branch. The CI change is initially stacked on `feature/initial-feasibility`.
+The `macOS validation` workflow runs on pull requests, including stacked PRs targeting a feature branch, and pushes to `main`. Pull requests test GitHub's proposed merge commit. A manual run is available once the workflow is on the default branch. The CI change is now stacked on `feature/payload-dispatch` ([PR #3](https://github.com/bgaechter/QRSnap/pull/3)), which depends on `feature/scan-coordinator` ([PR #2](https://github.com/bgaechter/QRSnap/pull/2)). This makes the hosted checks cover the combined core implementation before integration.
 
 The job checks that the committed project matches its generator, runs the complete standalone suite with synthetic Vision fixtures, builds the ad-hoc signed app, audits its signature and entitlements, then builds and runs the app-hosted XCTest target. Failures remain failures; there is no automatic fallback to core-only tests or disabled sandboxing. Logs and XCTest result bundles are retained for seven days as workflow artifacts. Build products and caches stay in the runner's checkout.
 
@@ -28,7 +28,6 @@ At introduction, hosted CI and XCTest were **NOT RUN**. The first hosted run is 
 
 Local introduction checks on 14 October 2026: shell/YAML syntax, generated-project equality, preservation of deliberately stale project edits, and the explicit missing-Xcode failure path passed. The app stage passed its ad-hoc signature/sandbox/runtime audit; the standalone fixture stage passed 19 methods with zero assertion failures on macOS 26.5.2 arm64 with Swift 6.3.3. These results do not establish the selected hosted runner result.
 
-
 ## First hosted run and SDK compatibility fix
 
 [Run 38634192586](https://github.com/bgaechter/QRSnap/actions/runs/38634192586), on PR #4 at source commit `8e2b6b464bf33ea8ff930c43af37f1dda6a7fc98`, used macOS 15.7.9 arm64, Xcode 16.4, Swift 6.1.2 and the macOS 15.5 SDK. Environment/project checks and all 19 standalone methods passed. App compilation failed because the SDK imports `SCShareableContent` without a `Sendable` conformance and its asynchronous return crosses into `ScreenCaptureService`'s main-actor context. Signature validation and hosted XCTest were consequently **NOT RUN**.
@@ -38,3 +37,11 @@ The follow-up uses `@preconcurrency import ScreenCaptureKit` only in the capture
 Moving capture to another isolation domain or replacing the async API with a callback/continuation bridge would change more of the adapter without resolving the missing framework contract. This change therefore keeps existing isolation, cancellation checks, permission preflight, sandbox configuration and runtime gates, without adding an unchecked conformance or raising the SDK requirement. Runtime capture acceptance remains a separate G0 requirement.
 
 The compatibility change's selected Xcode 16.4 build/signature result and hosted XCTest are **NOT RUN** until the follow-up CI run finishes. Local `ci-check.sh project` and `ci-check.sh app` both passed after the import change, including the generated-project comparison, app compilation, ad-hoc signature, sandbox, hardened-runtime and deployment-floor audits. These checks use Swift 6.3.3 and cannot prove the older-toolchain result. The app was not launched and the separate runtime-verification worktree was not changed.
+
+## Combined core dependency
+
+The CI branch merges published dispatcher/coordinator tip `102b2796b4b2da10334b116adab349d078e443db` while preserving the CI compatibility fix as its first-parent history. Both the generated Xcode project and the standalone runner include all 42 methods: 17 original core methods, 13 dispatcher methods, 10 coordinator methods and two Vision fixture methods. The earlier 19-method results above are historical results for the initial feasibility source.
+
+The dependency's [combined-core verification](dispatch-handoff.md#combined-core-verification) records 42 standalone methods passing on the development Mac. The next hosted run must validate this combined source with Xcode 16.4, including the app-hosted XCTest target. The coordinator and dispatcher still await production composition; merging them into the CI branch does not enable automatic routing or accept any G0/G3/G4 runtime gate.
+
+After merging this dependency, `ci-check.sh project` and `ci-check.sh app` both passed locally: the combined generated project is current, and the complete app builds with the compatibility import and passes the signature/entitlement audits. No standalone rerun was needed for this import-only adapter change; the dependency retains its 42-method evidence. The app was not launched. Hosted validation of the combined tree remains **NOT RUN** pending the next Actions run.
