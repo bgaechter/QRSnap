@@ -51,3 +51,7 @@ The following `ScanCoordinatorTests` methods need registration in the shared sta
 10. `testEventReentrancyCannotPublishCancelledResultsOrInvalidateRetry`
 
 Fakes intentionally complete capture/decode and timers after cancellation. Tests cover capture/decode timeout, two-session races, late timer events, reentrant cancellation, unknown and typed failures, nil/duplicate result preservation, and cancellation after claiming opening. These are mocked-boundary checks with synthetic data; they prove no actual handler behavior or performance target.
+
+## Integrator registration
+
+The shared standalone runner and generated Xcode project now include all ten coordinator test methods. The full fixture suite is executed by the integrator before PR publication. This branch is stacked on `feature/initial-feasibility`. G0 and app composition remain open.
