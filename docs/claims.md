@@ -8,8 +8,8 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 | --- | --- | --- |
 | Five document conversions | PASS | [Conversion record](evidence/document-conversion.json), [prose check](evidence/document-conversion-check.log); exact original bytes preserved. |
 | Application build | PASS | [Integrated build log](evidence/screen-permission-build.log); Swift 6, arm64, deployment target macOS 14, separate output preserving the authorized runtime app. Does not prove execution on macOS 14. |
-| Local signature | PASS | Ad-hoc signature, strict verification, App Sandbox and Hardened Runtime. [Signature audit](evidence/signature.log). No Developer ID/notarization claim. |
-| Xcode project/plist syntax | PASS | Generated project checked; [earlier hosted CI](ci.md#combined-hosted-result) ran 42 XCTest methods. Local full Xcode and hosted checks of this new change are separate. |
+| Local signature | PASS | Ad-hoc signature, strict verification, App Sandbox and Hardened Runtime. [Runtime signature](evidence/screen-permission-runtime.json) and [integrated build](evidence/screen-permission-build.log). No Developer ID/notarization claim. |
+| Xcode project/plist syntax and hosted XCTest | PASS | Generated project checked; [PR #7 hosted run](https://github.com/bgaechter/QRSnap/actions/runs/38643183564) passed including app-hosted XCTest. Local full Xcode is unavailable. Hosted tests do not establish screen permission or signed GUI runtime acceptance. |
 | Core behavior | PASS | 42 standalone core methods, including coordinator race mocks, guarded dispatcher mocks, geometry, marker measurement and retained text. Pure/mocked evidence does not establish production composition. |
 | Vision baseline | PASS on this machine | 12 positive PNG fixtures plus one no-code image. Exact optional payload arrays, including two-code reading order. HTTP(S), multilingual/emoji, multiline, escaped URL, custom/mailto, Wi-Fi and credentials-like synthetic text, rotation and inversion. |
 | Vision characterization | OBSERVED | Dense (1, exact), small (1, exact), cropped (0), damaged (0). Four isolated samples do not locate a general reliability boundary. |
@@ -18,7 +18,7 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 | G0 capture/permission/shortcut/Spaces | PARTIAL PASS | Stale ad-hoc grant diagnosed and repaired. Actual sandbox capture, zero-error 2× marker mapping, visual overlay exclusion, post-invocation freshness, cancellation, shortcut/conflict, revoke/recover pass. Physical shortcut and full-screen Space checks are user-observed. Remaining matrix is explicit in the [follow-up](screen-permission-runtime.md). |
 | G0 external `.txt` access | PASS on this host | TextEdit rendering, exact 66 UTF-8 bytes, 0600/0700 and retention after editor close and QRSnap restart verified again. Other editors/OS versions NOT RUN. [Follow-up](screen-permission-runtime.md). |
 | Coordinator races / production composition | MOCKS PASS / GUI NOT RUN | Delayed capture/decode/launcher and stale-session tests pass. Production coordinator and dispatcher are still not composed into the feasibility UI. |
-| G2 display/OS matrix, T6 timing, T8 accessibility | NOT RUN | Need hardware/OS matrix, 30-run measurements, and keyboard/VoiceOver checks. |
+| G2 display/OS matrix, T6 timing, T8 accessibility | PARTIAL / NOT RUN | Primary 2× display measured on this host. Other hardware/OS configurations, 30-run timings and complete keyboard/VoiceOver checks NOT RUN. |
 | G6 release | NOT RUN | Full Xcode, chosen release signing identity, release authorization and clean installation tests required. |
 
 ## Claim status

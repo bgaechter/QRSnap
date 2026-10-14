@@ -21,6 +21,7 @@ Host: Mac16,8, arm64, macOS 26.5.2 (25F84), Swift 6.3.3, SDK 26.5. One built-in 
 - The runtime artifact was built from the runtime-controls base `47c2481` plus the diagnostic/marker changes. Its [source hashes and signature](evidence/screen-permission-runtime.json) identify it independently of later integration. That binary stayed unchanged throughout the final checks.
 - After integration onto main `3afaa4a`, **44 standalone methods passed with zero failures**, including Vision fixtures, coordinator/dispatcher mocks, and two synthetic marker methods. [Test log](evidence/screen-permission-tests.log). This is distinct from GUI runtime evidence.
 - The integrated application built and passed strict signature verification at `build/validation/QRSnap.app`, using `APP_OUTPUT_PATH` so the authorized binary was preserved. [Build log](evidence/screen-permission-build.log). This second app was not granted access or launched. Local full Xcode/XCTest is NOT RUN; the earlier 42-method hosted result remains documented in [CI evidence](ci.md).
+- [Hosted run 38643183564](https://github.com/bgaechter/QRSnap/actions/runs/38643183564) passed for PR #7 code/evidence commit `3ac74523ec2a2f078c9b5c8caea2fcd3fdf7a95a`: generated-project checks, standalone fixtures, sandbox app build/audit, and app-hosted XCTest on the macOS 15 / Xcode 16.4 job. Subsequent evidence-label corrections do not change implementation or tests. Hosted XCTest does not replace the frozen signed GUI runtime experiment.
 
 ## Runtime results
 

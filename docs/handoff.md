@@ -2,7 +2,7 @@
 
 ## Latest follow-up — screen permission repair
 
-PRs #2–#5 are merged; this fix is based on main `3afaa4a`. Worktree: `/Users/benny/.codex/worktrees/screen-permission/QRSnap`, branch `fix/screen-permission`. The [runtime follow-up](screen-permission-runtime.md) diagnoses the stale ad-hoc code requirement and records successful sandboxed capture, zero-error 2× marker mapping, visual exclusion, freshness, shortcut/conflict, revocation recovery, user-observed full-screen Space behavior and TextEdit handoff. G0 remains open for the named outstanding matrix; automatic dispatch and production UI composition remain unimplemented.
+PRs #2–#5 are merged; [PR #7](https://github.com/bgaechter/QRSnap/pull/7) is based on main `3afaa4a`. Worktree: `/Users/benny/.codex/worktrees/screen-permission/QRSnap`, branch `fix/screen-permission`. Ordinary SSH push succeeded for this branch. The [runtime follow-up](screen-permission-runtime.md) diagnoses the stale ad-hoc code requirement and records successful sandboxed capture, zero-error 2× marker mapping, visual exclusion, freshness, shortcut/conflict, revocation recovery, user-observed full-screen Space behavior and TextEdit handoff. G0 remains open for the named outstanding matrix; automatic dispatch and production UI composition remain unimplemented.
 
 The integrated source passes 44 standalone methods and a separate sandbox build. Preserve `build/QRSnap.app` (CDHash `b40106c537e85ed14464fbf68a07b83f792ecb0f`) while its grant is used; build future validation artifacts with `APP_OUTPUT_PATH`. The older sections below describe their original handoff state, not current merge or runtime status.
 

@@ -132,6 +132,20 @@
     "app_build": "PASS; build/validation/QRSnap.app, not launched",
     "project_check": "PASS",
     "local_xcode": "NOT RUN; Command Line Tools only",
-    "runtime_binary_unchanged": true
+    "runtime_binary_unchanged": true,
+    "hosted_ci": {
+      "run_id": 38643183564,
+      "url": "https://github.com/bgaechter/QRSnap/actions/runs/38643183564",
+      "source_commit": "3ac74523ec2a2f078c9b5c8caea2fcd3fdf7a95a",
+      "job": "macOS 15 / Xcode 16.4",
+      "result": "PASS",
+      "stages": [
+        "generated project",
+        "standalone contracts and Vision",
+        "sandbox app build and audit",
+        "app-hosted XCTest"
+      ],
+      "gui_capture_tested": false
+    }
   }
 }
