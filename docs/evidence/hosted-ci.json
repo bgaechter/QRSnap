@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-14",
+  "source_commit": "1f4fdbfb92b4ad97d1e61100fdf6020fe7acf04f",
+  "run_url": "https://github.com/bgaechter/QRSnap/actions/runs/38634996862",
+  "run_id": 38634996862,
+  "conclusion": "success",
+  "os": "macOS 15.7.9 (24G830)",
+  "architecture": "arm64",
+  "xcode": "16.4 (16F6)",
+  "swift": "6.1.2",
+  "sdk": "15.5",
+  "standalone_methods": 42,
+  "xctest_methods": 42,
+  "assertion_failures": 0,
+  "project_consistency": "PASS",
+  "command_line_app_signature_sandbox_hardened_runtime_audit": "PASS",
+  "xcode_test_host_hardened_runtime": "DISABLED BY XCODE FOR AD-HOC SIGNING",
+  "screen_capture_and_external_dispatch": "NOT RUN",
+  "g0": "OPEN"
+}
