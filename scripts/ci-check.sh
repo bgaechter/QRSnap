@@ -4,8 +4,8 @@ cd "$(dirname "$0")/.."
 
 stage="${1:-all}"
 case "$stage" in
-    all|environment|project|fixtures|app|xcode) ;;
-    *) echo "Usage: bash scripts/ci-check.sh [all|environment|project|fixtures|app|xcode]" >&2; exit 2 ;;
+    all|environment|project|fixtures|app|xcode|archive) ;;
+    *) echo "Usage: bash scripts/ci-check.sh [all|environment|project|fixtures|app|xcode|archive]" >&2; exit 2 ;;
 esac
 mkdir -p .build/ci
 
@@ -60,27 +60,38 @@ check_fixtures() {
     bash scripts/test.sh
 }
 
-check_app() {
-    SIGNING_IDENTITY=- bash scripts/build-app.sh
-    codesign --verify --strict --verbose=2 build/QRSnap.app
-    codesign --display --verbose=4 build/QRSnap.app 2>&1 | tee .build/ci/signature-details.log
-    codesign --display --entitlements - --xml build/QRSnap.app > .build/ci/entitlements.plist
-    python3 - <<'PY'
+verify_app() {
+    local app_path="$1" audit_prefix="$2" require_runtime="${3:-yes}"
+    codesign --verify --strict --verbose=2 "$app_path"
+    codesign --display --verbose=4 "$app_path" 2>&1 | tee "${audit_prefix}-signature.log"
+    codesign --display --entitlements - --xml "$app_path" > "${audit_prefix}-entitlements.plist"
+    python3 - "$app_path" "$audit_prefix" "$require_runtime" <<'PY'
 from pathlib import Path
 import plistlib
 import re
+import sys
 
-entitlements = plistlib.loads(Path(".build/ci/entitlements.plist").read_bytes())
+app, prefix, require_runtime = sys.argv[1:]
+entitlements = plistlib.loads(Path(f"{prefix}-entitlements.plist").read_bytes())
 if entitlements != {"com.apple.security.app-sandbox": True}:
     raise SystemExit("Unexpected signed entitlements; expected only App Sandbox.")
-signature = Path(".build/ci/signature-details.log").read_text()
-if not re.search(r"flags=.*\bruntime\b", signature) or "Signature=adhoc" not in signature:
-    raise SystemExit("Expected an ad-hoc signature with Hardened Runtime.")
-info = plistlib.loads(Path("build/QRSnap.app/Contents/Info.plist").read_bytes())
+signature = Path(f"{prefix}-signature.log").read_text()
+if "Signature=adhoc" not in signature:
+    raise SystemExit("Expected an ad-hoc signature.")
+if require_runtime == "yes" and not re.search(r"flags=.*\bruntime\b", signature):
+    raise SystemExit("Expected Hardened Runtime.")
+info = plistlib.loads((Path(app) / "Contents/Info.plist").read_bytes())
 if info.get("LSMinimumSystemVersion") != "14.0":
     raise SystemExit("Expected the macOS 14.0 deployment floor.")
-print("Verified ad-hoc signature, App Sandbox, Hardened Runtime and declared deployment floor.")
+print(f"Verified {app}: ad-hoc signature, App Sandbox and macOS 14.0 deployment floor.")
+if require_runtime == "yes":
+    print("Verified Hardened Runtime.")
 PY
+}
+
+check_app() {
+    SIGNING_IDENTITY=- bash scripts/build-app.sh
+    verify_app build/QRSnap.app .build/ci/app
 }
 
 check_xcode() {
@@ -99,6 +110,31 @@ check_xcode() {
         CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=-
 }
 
+check_archive() {
+    local archive_dir archive_path app_path
+    archive_dir="$(mktemp -d "$PWD/.build/ci/archive-XXXXXX")"
+    archive_path="$archive_dir/QRSnap.xcarchive"
+    app_path="$archive_path/Products/Applications/QRSnap.app"
+    xcodebuild archive \
+        -project QRSnap.xcodeproj -scheme QRSnap -configuration Release \
+        -destination 'generic/platform=macOS' \
+        -derivedDataPath "$PWD/.build/ci/ReleaseDerivedData" \
+        -archivePath "$archive_path" \
+        CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=-
+    test -d "$app_path"
+    # Audit Xcode's original entitlements before replacing its signature.
+    # Xcode can disable Hardened Runtime with ad-hoc signing, even when configured.
+    verify_app "$app_path" .build/ci/archive-original no
+    echo "Applying the explicit ad-hoc Hardened Runtime signature to the archived app."
+    codesign --force --sign - --options runtime \
+        --entitlements QRSnap/App/QRSnap.entitlements "$app_path"
+    verify_app "$app_path" .build/ci/archive-final
+    # Preserve the executable permissions and bundle layout inside the artifact.
+    ditto -c -k --keepParent "$app_path" "$archive_dir/QRSnap-adhoc-pr.zip"
+    echo "Packaged verified Release app: $archive_dir/QRSnap-adhoc-pr.zip"
+    echo "This is an ad-hoc PR test build, not a Developer ID/notarized release."
+}
+
 run_stage() {
     echo "::group::QRSnap CI: $1"
     "check_$1" 2>&1 | tee ".build/ci/$1.log"
@@ -106,7 +142,7 @@ run_stage() {
 }
 
 if [[ "$stage" == all ]]; then
-    for stage in environment project fixtures app xcode; do run_stage "$stage"; done
+    for stage in environment project fixtures app xcode archive; do run_stage "$stage"; done
 else
     run_stage "$stage"
 fi
