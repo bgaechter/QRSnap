@@ -1,0 +1,58 @@
+import AppKit
+import ScreenCaptureKit
+
+@MainActor final class ScreenPermissionService: ScreenPermissionChecking {
+    var isGranted: Bool { CGPreflightScreenCaptureAccess() }
+    func request() -> Bool { CGRequestScreenCaptureAccess() }
+}
+
+@MainActor enum DisplayInventory {
+    static var current: [DisplayGeometry] {
+        NSScreen.screens.compactMap { screen in
+            guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
+                return nil
+            }
+            return DisplayGeometry(id: number.uint32Value, frame: screen.frame, backingScale: screen.backingScaleFactor)
+        }.sorted { $0.id < $1.id }
+    }
+}
+
+/// G0 experimental adapter. Runtime source mapping and exclusion remain gates.
+@MainActor final class ScreenCaptureService: ScreenCapturing {
+    func capture(_ selection: Selection) async throws -> CapturedFrame {
+        guard CGPreflightScreenCaptureAccess() else { throw ScanFailure.permissionUnavailable }
+        guard selection.topology == DisplayInventory.current else { throw ScanFailure.displayChanged }
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+            try Task.checkCancellation()
+            guard selection.topology == DisplayInventory.current,
+                  let display = content.displays.first(where: { $0.displayID == selection.display.id }) else {
+                throw ScanFailure.displayChanged
+            }
+            // Never silently proceed without identifying our own app for exclusion.
+            guard let ownApp = content.applications.first(where: { $0.processID == ProcessInfo.processInfo.processIdentifier }) else {
+                throw ScanFailure.captureFailed
+            }
+            let filter = SCContentFilter(display: display, excludingApplications: [ownApp], exceptingWindows: [])
+            let region = try GeometryAdapter.pixelRegion(rect: selection.rectInDisplayTopLeftPoints,
+                                                        displaySize: selection.display.size,
+                                                        scale: CGFloat(filter.pointPixelScale))
+            let configuration = SCStreamConfiguration()
+            configuration.sourceRect = region.sourceRectInPoints
+            configuration.width = region.width
+            configuration.height = region.height
+            configuration.showsCursor = false
+            configuration.capturesAudio = false
+            configuration.scalesToFit = false
+            let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration)
+            try Task.checkCancellation()
+            guard selection.topology == DisplayInventory.current else { throw ScanFailure.displayChanged }
+            guard image.width == region.width, image.height == region.height else { throw ScanFailure.captureFailed }
+            return CapturedFrame(image: image, orientation: .up)
+        } catch let failure as ScanFailure { throw failure }
+        catch is CancellationError { throw CancellationError() }
+        catch {
+            throw CGPreflightScreenCaptureAccess() ? ScanFailure.captureFailed : ScanFailure.permissionUnavailable
+        }
+    }
+}

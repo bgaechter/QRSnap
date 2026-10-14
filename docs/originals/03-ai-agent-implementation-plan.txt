@@ -1,0 +1,173 @@
+IMPLEMENTATION PLAN FOR AI AGENTS — SCREEN QR READER
+14 October 2026
+
+MISSION
+Implement the reviewed native macOS rectangle-to-QR-to-default-app workflow in 01-product-and-technical-plan.txt. Use 02-adversarial-review.txt as objections to discharge and 04-evidence-and-verification.txt as the initial evidence register. This document assigns future work; no agents were dispatched and no application was implemented during this planning task.
+
+OPERATING RULES FOR EVERY AGENT
+
+1. Read the product contract, evidence register and applicable repository instructions before changing code. Create a new app project in its own chosen repository/directory; do not build into or overwrite the unrelated wedding-token workspace.
+2. Treat every factual assertion as a claim with evidence. Keep API documentation, compiler checks, unit tests, signed runtime tests and subjective observations separate. “Not run” must remain not run. Link evidence to a commit and record OS, hardware, architecture, build identity and settings.
+3. Do not change scope, minimum OS, payload dispatch, permission requirements, text retention or distribution policy silently. Record a proposed change, evidence, consequence and accepted alternative in a short decision record.
+4. Use synthetic QR images and harmless example URLs for testing. Do not upload captured pixels or payloads. Do not request permissions, change system defaults, register persistent startup items, publish a build or change another application's settings merely to make a test pass. Any necessary environment action must stay within actual user/test-machine authorization.
+5. Do not add broad entitlements, disable sandboxing or replace capture APIs with private APIs as an undocumented workaround. Stop the dependent task and report the exact failed prerequisite; continue independent work only.
+6. Do not invent API signatures or minimum versions. Inspect the selected SDK and typecheck the smallest example. Newer APIs need explicit availability handling; prefer the reviewed macOS 14 path.
+7. One integrator owns the project file, shared model definitions and signing/entitlement configuration. If multiple agents work concurrently later, assign disjoint files and freeze the interfaces first. The dependency graph below permits parallel work; it does not require creating multiple agents.
+8. A task is done only when its stated acceptance evidence exists. Do not mark a manual test passed because a mocked test passed. Do not treat an NSWorkspace callback as proof that a web page loaded.
+
+PROPOSED REPOSITORY DELIVERABLES [requirements, not existing files]
+
+ScreenQR.xcodeproj
+ScreenQR/App/{AppDelegate,StatusMenu,SettingsController}.swift
+ScreenQR/Scan/{ScanCoordinator,ScanModels}.swift
+ScreenQR/Selection/{SelectionPanel,SelectionView,GeometryAdapter}.swift
+ScreenQR/Capture/{ScreenCaptureService,ScreenPermissionService}.swift
+ScreenQR/Decode/QRDecoder.swift
+ScreenQR/Routing/{PayloadClassifier,PayloadLauncher,TextDocumentStore}.swift
+ScreenQRTests/{GeometryTests,RoutingTests,SessionTests,DecoderFixtureTests}.swift
+ScreenQRTests/Fixtures/                 synthetic images + expected payloads
+docs/{claims,decisions,manual-tests}.txt
+docs/evidence/                         sanitized logs and fixture-only captures
+README                                build, permission, use and retention notes
+
+Avoid creating empty layers/files just to match this sketch. Combine a small view/controller where that reduces indirection without hiding the OS boundary.
+
+CONTRACTS TO FREEZE IN A0
+
+Selection: sessionID, displayID, rectInDisplayTopLeftPoints, display geometry snapshot/version.
+Capture output: CGImage and explicit pixel dimensions/orientation. Capture must not save an image.
+Decoded item: session-local ID, optional unmodified payload string, normalized QR bounds.
+Route: webURL(URL), confirmedExternalURI(URL, handler metadata), plainText(String), unsupported(reason).
+Launch result: handoffSucceeded or failure(errorCategory). No “pageLoaded” state.
+Text store: creates a unique .txt document from UTF-8 data, returns its URL, retains it under D6.
+Error categories: permissionUnavailable, displayChanged, invalidSelection, captureFailed, timedOut,
+                 noQR, unsupportedPayload, handlerUnavailable, fileWriteFailed, launchFailed.
+
+Keep pure Classification and Geometry APIs independent of AppKit global state. The capture/decode/launcher/permission boundaries must be replaceable with deterministic fakes in coordinator tests. Keep CGRect orientation explicit in names and documentation.
+
+DEPENDENCY GRAPH
+
+A0 signed feasibility + project/contracts
+  ├─ A1 pure core + fixtures
+  ├─ A2 overlay + capture
+  └─ A3 dispatch + text documents
+A1 + A2 + A3 → A4 complete workflow → A5 adversarial acceptance → A6 release candidate
+
+Independent coding in A1–A3 is permitted only after A0 freezes shared interfaces. Coordinate project-file changes through the integrator.
+
+A0 — FEASIBILITY OWNER / INTEGRATOR
+
+Goal: establish the least-proven platform facts before polishing the app.
+Prerequisites: full Xcode, chosen bundle ID and controlled signed test environment. The planning machine currently has Command Line Tools selected, not a selected full Xcode installation; do not assume xcodebuild project tests have already run.
+
+Tasks:
+  1. Create the smallest macOS 14 app target, sandbox enabled, a menu command and disposable selection panel. Record toolchain and SDK versions. Keep signing credentials out of the repository.
+  2. Build a tiny signed proof that invokes ScreenCaptureKit only on explicit test action, captures a synthetic QR/marker window, and excludes the application's overlay.
+  3. Prove rectangle coordinates and output pixel scale on primary/secondary displays, including one with negative global coordinates. Record actual returned CGImage dimensions and expected marker positions.
+  4. Exercise first grant, denial, revocation and relaunch recovery. Add a truthful usage description; do not promise it suppresses system consent prompts.
+  5. Register the proposed global shortcut exclusively; test while another app is foreground. Test a competing registration, Escape, non-US layout and whether Accessibility/Input Monitoring is requested. Do not infer permission-free operation from registration returning success.
+  6. Show the panel over a full-screen app and through Space/Stage Manager changes. Verify no unwanted Space switch and reliable cancellation. Test current stable OS plus the deployment floor using real environments where available.
+  7. Create a harmless UTF-8 file in the proposed sandboxed storage location and hand it to the actual .txt default handler. Keep it until explicit test cleanup.
+  8. Freeze the shared contracts above. Resolve each failure with evidence or document a proposed product boundary; do not silently weaken it.
+
+Deliverables: runnable proof branch, project skeleton, concise evidence report, claim statuses U1–U4/U7 and finalized contracts. A proof is not the finished product.
+Acceptance G0: verified capture region/exclusion, functioning signed invocation/escape, known permission flow, and successful external text-file access in the selected sandbox configuration. Unavailable OS/display hardware remains a named blocker to that compatibility claim. Independent pure-code tasks may continue, but affected implementation/release claims cannot be approved.
+
+A1 — CORE LOGIC AND DECODER FIXTURES
+
+Depends on: A0 contracts; API availability already checked but runtime fixtures still required.
+Owns: ScanModels, GeometryAdapter, PayloadClassifier, QRDecoder, corresponding unit tests and fixtures.
+
+Tasks:
+  1. Implement coordinate normalization for all four drag directions, origin conversion, clipping to a display, display identity validation and point-to-pixel rounding as proved in G0.
+  2. Implement D5 as a pure classifier. URL(string:) returning non-nil is not enough. Preserve original text, require an explicit scheme for URL routing and prohibit command execution. A registered scheme lookup belongs at the OS boundary, not inside a supposedly pure parser.
+  3. Implement the serial Vision request with QR-only symbology and an explicit revision/orientation. Keep nil text payload distinct from an empty string or no observation. Test result order separately from Vision's returned order.
+  4. Create synthetic QR fixtures with exact expected strings: HTTPS, HTTP, multilingual text, emoji, multiline content, escaped URLs, unusual/custom schemes, credentials-like text, multiple codes and negative images. Include rotated/inverted examples and characterize small/dense/damaged cases.
+  5. Add geometry cases for 1×/2× scales, shifted display origins, clamping and portrait dimensions. Use observed G0 coordinate conventions, not an unverified hard-coded flip.
+
+Acceptance G1: deterministic routing/geometry tests pass, supported baseline images decode to exact expected text, unsupported payloads produce a typed result, and no test opens an external app. Do not claim Vision can decode every QR from fixture success.
+
+A2 — RECTANGLE UI AND ONE-SHOT CAPTURE
+
+Depends on: G0 and frozen Selection contract. May proceed alongside A3.
+Owns: Selection panels/views, screen-capture and permission adapters.
+
+Tasks:
+  1. Implement the proven panel configuration with crosshair, dimming, drag outline and visible instructions. Capture mouse-down display identity and constrain the selection to it.
+  2. Route Escape and display-change events into cancellation. Clean up panels/cursors/monitors exactly once on success, errors and cancellation. Do not let abandoned overlays consume future mouse events.
+  3. Resolve SCDisplay by ID, exclude the app, configure sourceRect/output pixel size/cursor/audio explicitly and obtain one CGImage. Keep capture and decoding separate. No screenshots written to disk.
+  4. Handle permission errors without prompt loops. Distinguish system access failure from a valid captured image containing no QR. Avoid asserting that every blank image is protected content.
+  5. Integrate size/pixel limits and progress/timeout signals. Ignore obsolete results after cancellation or display topology changes.
+
+Acceptance G2: the selection/capture portion of T1–T3 passes on the declared matrix; fixture captures have no dim layer or outline baked in; source crops meet the measured one-pixel convention. Include manual evidence for full-screen/Spaces, not just panel unit tests.
+
+A3 — DEFAULT-APPLICATION HANDOFF AND TEXT STORAGE
+
+Depends on: G0 storage/handoff proof and A0 Route contract. May proceed alongside A2.
+Owns: PayloadLauncher, TextDocumentStore, confirmation/failure views and routing integration tests.
+
+Tasks:
+  1. Use asynchronous NSWorkspace opening and surface the callback error. Automatic HTTP/HTTPS opening must not hard-code a browser or change system associations.
+  2. Resolve and display handlers for non-web schemes, require the D5 Open action and keep blocked/unknown schemes as text. Prevent launch through file:, javascript: and data: dispatch paths.
+  3. Write plain text atomically under the owned storage directory using random names and .txt extension. Preserve UTF-8 contents exactly. Keep files after handoff and expose the folder. Do not run payload content as a command or put it into AppleScript.
+  4. If file writing or opening fails, retain the decoded text in the current result UI and offer Copy/Save… rather than losing it.
+  5. Implement in-app disclosure of text retention. No payload in OSLog, filename, analytics or diagnostics. Set addsToRecentItems false where supported, without claiming the receiving app cannot keep its own history.
+
+Acceptance G3: T5/T7 tests pass; one launch per chosen result, unchanged text bytes, no automatic destructive cleanup, destination prompt only where D5 calls for it. Default-handler tests use a controlled test environment and record what app actually handled the file/URL.
+
+A4 — WORKFLOW INTEGRATOR
+
+Depends on: G1, G2, G3.
+Owns: coordinator, app composition, menu/settings and shared project changes.
+
+Tasks:
+  1. Implement the D9 state machine and bind shortcut/menu to the same action. Persist only non-sensitive preferences such as the chosen shortcut.
+  2. Use a session ID through capture, decode, chooser and opening. Guard the final launch against cancellation, timeout or replacement. Reset consistently after every error.
+  3. Implement zero/one/many result UX, unsupported payload, retry and handler confirmation. One physical observation corresponds to one chooser entry in v1; do not silently deduplicate different codes by a lossy string comparison.
+  4. Keep the interface responsive with the defined progress/timeout policy. Use test doubles to control callback ordering.
+  5. Add menu/settings accessibility labels, keyboard navigation and VoiceOver feedback. Do not claim the rectangle gesture is fully accessible to nonvisual users without further work.
+
+Acceptance G4: one end-to-end synthetic HTTPS scan and one Unicode text scan pass; two-code selection opens only the chosen result; cancellation/timeout/double-shortcut/race tests open no stale destination; errors leave the next scan usable.
+
+A5 — INDEPENDENT ADVERSARIAL VALIDATION
+
+Depends on: G4. Role can be performed by a later reviewer; no concurrent subagent is required.
+Owns: acceptance corpus expansion, manual-test record and findings. Avoid rewriting architecture during review.
+
+Tasks:
+  1. Re-run the major objections in 02-adversarial-review.txt against actual code and a signed candidate. Record each as disproved, fixed, accepted limitation or still open, with evidence.
+  2. Execute T1–T8. Verify permission flow under fresh identity, external monitor/display changes, non-US shortcuts, full-screen/Spaces and repeated scans.
+  3. Inject delayed completions after Escape/timeout, capture errors, missing handlers and text-write failures. Assert no stale launch and no stuck overlay.
+  4. Measure p95 stage times using at least 30 measured runs per stated reference configuration; separate warm and cold runs. Report observed values even if they miss the target. Browser/editor load time is excluded from the app's processing metric.
+  5. Inspect app files/logs and verify there is no persisted screenshot or payload log. Confirm text-document retention matches the disclosure. Inspect only authorized test data.
+  6. Check memory during repeated scans and cancellation; show that image references are released and no continuous capture survives idle.
+
+Acceptance G5: no unresolved major defect in core dispatch/cancellation/privacy; required baseline corpus passes; manual matrix is honest about missing environments. A failed target needs a fix or explicit revised requirement, never an invented pass.
+
+A6 — RELEASE ENGINEER / FINAL HANDOFF
+
+Depends on: G5, signing credentials and explicit release authorization for external distribution actions.
+Owns: release build configuration, entitlement audit, packaging and final user documentation.
+
+Tasks:
+  1. Produce a reproducible Release archive. Choose supported architectures explicitly; build a universal binary only if toolchain/dependencies support both and test Intel before advertising Intel compatibility.
+  2. Audit final entitlements, usage descriptions and any privacy-manifest obligations against the actual APIs in the completed code. Do not invent a screen-recording entitlement or add persistent VNC capture privileges for this utility.
+  3. Sign with Developer ID, enable Hardened Runtime, notarize and staple according to current Apple guidance when distribution is authorized. Keep secrets out of prompts, files and logs.
+  4. Validate install, first permission grant, scan, text handoff, quit/relaunch and removal on a clean test account. Notarization success is not a replacement for these checks.
+  5. Document supported OS/architectures, shortcut conflict behaviour, permissions, single-display gesture boundary, text retention, supported payloads and known decoder/display limitations.
+
+Acceptance G6: verified signed artifact, reproducible build/test instructions and evidence matrix. If credentials, full Xcode or physical test hardware are absent, deliver the completed source/build instructions and name the exact remaining release gates. Do not fabricate an installed or notarized product.
+
+STANDARD AGENT HANDOFF FORMAT
+
+Task ID / commit:
+Implemented behaviour and files owned:
+Claims verified (IDs + evidence):
+Tests run (command or manual procedure, environment, actual result):
+Not run / blocked (exact missing prerequisite):
+New findings or design deviations:
+Next dependency unlocked:
+
+FINAL DEFINITION OF DONE
+
+The app meets R1 with the explicitly proposed D1–D20 boundaries; all core G0–G5 gates have evidence; the source is buildable and the runtime matrix is truthful. A distributable release additionally requires G6. A screenshot of the app, a successful typecheck, passing mock tests, or a completed task checklist alone is insufficient.

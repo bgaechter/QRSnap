@@ -1,0 +1,26 @@
+Executable=/Users/benny/git/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap
+Identifier=local.benny.QRSnap
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=1139 flags=0x10002(adhoc,runtime) hashes=25+7 location=embedded
+VersionPlatform=1
+VersionMin=917504
+VersionSDK=1705216
+Hash type=sha256 size=32
+CandidateCDHash sha256=4a6c142ee0eb0315a65fbe8436b65e424c4e1932
+CandidateCDHashFull sha256=4a6c142ee0eb0315a65fbe8436b65e424c4e19320d0808084020e405ab9a37f8
+Hash choices=sha256
+CMSDigest=4a6c142ee0eb0315a65fbe8436b65e424c4e19320d0808084020e405ab9a37f8
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=163840
+Executable Segment flags=0x1
+Page size=16384
+CDHash=4a6c142ee0eb0315a65fbe8436b65e424c4e1932
+Signature=adhoc
+Info.plist entries=11
+TeamIdentifier=not set
+Runtime Version=26.5.0
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12
+warning: Specifying ':' in the path is deprecated and will not work in a future release
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>

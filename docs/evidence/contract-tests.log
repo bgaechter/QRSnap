@@ -1,0 +1,24 @@
+PASS routing.web
+PASS routing.text
+PASS routing.malformed
+PASS routing.blocked
+PASS routing.custom
+PASS routing.nil-and-limit
+PASS geometry.directions
+PASS geometry.portrait-shift
+PASS geometry.click-small
+PASS geometry.rounding
+PASS geometry.limits
+PASS geometry.order
+PASS session.stale
+PASS session.once
+PASS session.timeout
+PASS storage.bytes-permissions-retention
+PASS storage.failure
+PASS vision.baseline
+CHARACTERIZATION cropped.png: observations=0, exact=true
+CHARACTERIZATION dense.png: observations=1, exact=true
+CHARACTERIZATION small.png: observations=1, exact=true
+CHARACTERIZATION damaged.png: observations=0, exact=true
+PASS vision.characterization
+19 tests, 0 assertion failures
