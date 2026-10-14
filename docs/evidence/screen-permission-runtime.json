@@ -21,5 +21,117 @@
   "signature_verified": true,
   "screen_capture_grant_cdhash": "b40106c537e85ed14464fbf68a07b83f792ecb0f",
   "screenshots_saved": false,
-  "payloads_logged": false
+  "payloads_logged": false,
+  "permission_diagnosis": {
+    "stale_grant_cdhash": "4a6c142ee0eb0315a65fbe8436b65e424c4e1932",
+    "original_app_cdhash": "6134346698257e0a0f14f9214eaadd41ea829a2d",
+    "validity_status_before": -67050,
+    "diagnostic_app_cdhash": "5b996d5756665d2691736d3ba1efecdf8bd082c8",
+    "preflight_before_repair": false,
+    "framework_error_domain": "SCStreamErrorDomain",
+    "framework_error_code_before": -3801,
+    "after_repair": {
+      "preflight": true,
+      "query": "accepted",
+      "matching_requirement": true
+    },
+    "valid_signing_identities": 0,
+    "method": "User-approved System Settings replacement of QRSnap only; no TCC database edits."
+  },
+  "display": {
+    "id": 1,
+    "logical_width": 1512,
+    "logical_height": 982,
+    "scale": 2,
+    "external_display_available": false
+  },
+  "crop": {
+    "source_rect_top_left_points": [
+      28,
+      127,
+      400,
+      400
+    ],
+    "output_pixels": [
+      800,
+      800
+    ],
+    "marker_bounds_inclusive": [
+      [
+        20,
+        20,
+        35,
+        35
+      ],
+      [
+        764,
+        20,
+        779,
+        35
+      ],
+      [
+        20,
+        764,
+        35,
+        779
+      ],
+      [
+        764,
+        764,
+        779,
+        779
+      ]
+    ],
+    "max_edge_error_px": 0,
+    "measured_directions": [
+      "top-left to bottom-right",
+      "bottom-left to top-right"
+    ],
+    "all_four_directions_exact_qr_and_dimensions": true,
+    "right_origin_measurement": "incomplete; automation pointer glow overlaps corner"
+  },
+  "freshness": {
+    "ordering": [
+      "phase B visible",
+      "invoke selection",
+      "change source to phase A",
+      "overlay remains active",
+      "drag and release",
+      "capture phase A with zero-error bounds"
+    ],
+    "during_held_drag": "NOT RUN"
+  },
+  "hotkey": {
+    "second_registration_while_app_enabled": -9878,
+    "after_disable": 0,
+    "app_registration_while_probe_holds": -9878,
+    "scan_fallback_and_escape": true,
+    "probe_unregister": 0,
+    "after_app_restart": 0,
+    "physical_invocation_and_escape": "USER OBSERVED PASS",
+    "fullscreen_space_and_escape": "USER OBSERVED PASS"
+  },
+  "permission_revocation_recovery": {
+    "revoked_and_restarted": "explanation before selection; Cancel returns to controls",
+    "restored_and_restarted": "actual capture, phase B, max edge error 0",
+    "grant_left_enabled": true
+  },
+  "text_handoff": {
+    "default_app": "TextEdit",
+    "utf8_exact": true,
+    "byte_count": 66,
+    "file_mode": "0600",
+    "directory_mode": "0700",
+    "retained_after_editor_close_and_app_restart": true,
+    "sha256": "641a09e97fca2f7a4656b6763769e7ebdf47449f28a4c99f2a1d6a52d9fd479c"
+  },
+  "integrated_validation": {
+    "base": "3afaa4a",
+    "standalone_methods": 44,
+    "failures": 0,
+    "app_build": "PASS; build/validation/QRSnap.app, not launched",
+    "project_check": "PASS",
+    "local_xcode": "NOT RUN; Command Line Tools only",
+    "runtime_binary_unchanged": true
+  }
 }

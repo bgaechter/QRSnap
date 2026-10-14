@@ -3,7 +3,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 arch_name="${ARCH:-$(uname -m)}"
 case "$arch_name" in arm64|x86_64) ;; *) echo "Unsupported ARCH: $arch_name" >&2; exit 1 ;; esac
-app_dir="$PWD/build/QRSnap.app"
+# Use a different output path to validate source changes without replacing the
+# exact ad-hoc binary currently authorized by Screen Recording.
+app_dir="${APP_OUTPUT_PATH:-$PWD/build/QRSnap.app}"
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources" "$PWD/.build/clang-module-cache"
 source_files=()
 while IFS= read -r -d '' path; do source_files+=("$path"); done < <(find QRSnap -name '*.swift' -print0)
@@ -16,3 +18,7 @@ codesign --force --sign "${SIGNING_IDENTITY:--}" --options runtime \
     --entitlements QRSnap/App/QRSnap.entitlements "$app_dir"
 codesign --verify --strict --verbose=2 "$app_dir"
 echo "Built $app_dir ($arch_name). Build does not launch the app."
+if [[ "${SIGNING_IDENTITY:--}" == "-" ]]; then
+    echo "Ad-hoc builds have a code-hash identity. Rebuilding may invalidate an existing Screen Recording grant."
+    echo "Keep an authorized runtime build unchanged; see docs/screen-permission-runtime.md."
+fi

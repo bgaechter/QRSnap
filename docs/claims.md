@@ -7,28 +7,28 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 | Check | Actual result | Evidence / limitation |
 | --- | --- | --- |
 | Five document conversions | PASS | [Conversion record](evidence/document-conversion.json), [prose check](evidence/document-conversion-check.log); exact original bytes preserved. |
-| Application build | PASS | [Build log](evidence/build.log); Swift 6, arm64, deployment target macOS 14. Does not prove execution on macOS 14. |
+| Application build | PASS | [Integrated build log](evidence/screen-permission-build.log); Swift 6, arm64, deployment target macOS 14, separate output preserving the authorized runtime app. Does not prove execution on macOS 14. |
 | Local signature | PASS | Ad-hoc signature, strict verification, App Sandbox and Hardened Runtime. [Signature audit](evidence/signature.log). No Developer ID/notarization claim. |
-| Xcode project/plist syntax | PASS | `plutil -lint`; shared scheme XML parsed. No Xcode build or XCTest run. |
-| Core behavior | PASS | 17 methods through the standalone runner: routing/host/escape validation, text preservation, nil/size guard, drag/clipping/rounding, observation order, session invalidation and one-time opening gate, text bytes/permissions/retention/failure. |
+| Xcode project/plist syntax | PASS | Generated project checked; [earlier hosted CI](ci.md#combined-hosted-result) ran 42 XCTest methods. Local full Xcode and hosted checks of this new change are separate. |
+| Core behavior | PASS | 42 standalone core methods, including coordinator race mocks, guarded dispatcher mocks, geometry, marker measurement and retained text. Pure/mocked evidence does not establish production composition. |
 | Vision baseline | PASS on this machine | 12 positive PNG fixtures plus one no-code image. Exact optional payload arrays, including two-code reading order. HTTP(S), multilingual/emoji, multiline, escaped URL, custom/mailto, Wi-Fi and credentials-like synthetic text, rotation and inversion. |
 | Vision characterization | OBSERVED | Dense (1, exact), small (1, exact), cropped (0), damaged (0). Four isolated samples do not locate a general reliability boundary. |
-| Full standalone suite | PASS | [19 methods, zero assertion failures](evidence/contract-tests.log), using graphics-service access outside the agent command sandbox. No test opens another application. |
+| Full standalone suite | PASS | [44 methods, zero assertion failures](evidence/screen-permission-tests.log), using graphics-service access outside the agent command sandbox. No test opens another application. The earlier 19-method log is historical. |
 | Empty/binary observations | PARTIAL | Pure nil/empty classification covered. No real binary/empty QR observation fixture yet. |
-| G0 capture/permission/shortcut/Spaces | PARTIAL / BLOCKED | Explicit explanation and Cancel observed. Preflight still reports unavailable after authorized exact-build grant and relaunch; no capture occurred. Shortcut/Spaces NOT RUN. [Runtime record](runtime-verification.md). |
-| G0 external `.txt` access | PASS on this host | Explicit synthetic test opened in default TextEdit; Unicode/multiline display, exact bytes, 0600/0700 and retention after QRSnap relaunch verified. Other editors/OS versions NOT RUN. [Runtime record](runtime-verification.md). |
-| Production coordinator races | NOT RUN | Session value is tested. Delayed fake capture/decode/launcher integration belongs to A4. |
+| G0 capture/permission/shortcut/Spaces | PARTIAL PASS | Stale ad-hoc grant diagnosed and repaired. Actual sandbox capture, zero-error 2× marker mapping, visual overlay exclusion, post-invocation freshness, cancellation, shortcut/conflict, revoke/recover pass. Physical shortcut and full-screen Space checks are user-observed. Remaining matrix is explicit in the [follow-up](screen-permission-runtime.md). |
+| G0 external `.txt` access | PASS on this host | TextEdit rendering, exact 66 UTF-8 bytes, 0600/0700 and retention after editor close and QRSnap restart verified again. Other editors/OS versions NOT RUN. [Follow-up](screen-permission-runtime.md). |
+| Coordinator races / production composition | MOCKS PASS / GUI NOT RUN | Delayed capture/decode/launcher and stale-session tests pass. Production coordinator and dispatcher are still not composed into the feasibility UI. |
 | G2 display/OS matrix, T6 timing, T8 accessibility | NOT RUN | Need hardware/OS matrix, 30-run measurements, and keyboard/VoiceOver checks. |
 | G6 release | NOT RUN | Full Xcode, chosen release signing identity, release authorization and clean installation tests required. |
 
 ## Claim status
 
-- **U1 / U3:** open. Experimental capture and selector compile; crop mapping, overlay exclusion, permission flow, scene freshness and desktop behavior require the [manual matrix](manual-tests.md).
-- **U2:** open. Exclusive Carbon wrapper compiles. No background shortcut, collision, alternate-layout or permission behavior claim.
+- **U1 / U3:** supported for the named 2× host checks, open for the remaining [manual matrix](manual-tests.md). Grant mismatch is resolved; do not extrapolate to unavailable OS/display configurations.
+- **U2:** background physical invocation, full-screen invocation, exclusive collision and unregister behavior pass on this host. Alternate layout and broader conflict behavior remain open.
 - **U4:** supported on this host by signed sandbox runtime handoff to TextEdit, visual content, exact UTF-8 and retained-file checks. Other default editors and OS versions remain open.
 - **U5:** native Vision supports the current synthetic baseline on this host. Deployment-floor coverage and unsupported-payload fixtures remain open; G1 is not fully accepted.
-- **U6:** session identity invariants pass. End-to-end late-callback/launch tests and performance remain open.
-- **U7:** local signed build exists. Distribution and runtime sandbox acceptance remain open.
+- **U6:** session identity and mocked late-callback/launch tests pass. Production GUI composition and performance remain open.
+- **U7:** local sandboxed, hardened capture and text handoff pass on this host. Supported OS/architecture coverage and distribution remain open.
 
 ## Platform source checks
 
