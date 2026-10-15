@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-15",
+  "base_commit": "91198dca4a405c61fc6f495f28f02ce92ded3efc",
+  "environment": {
+    "os": "26.5.2",
+    "build": "25F84",
+    "swift": "Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101); Target: arm64-apple-macosx26.0 (shell and test binary inspected directly)",
+    "developer_directory": "/Library/Developer/CommandLineTools",
+    "evidence_writer_process_architecture": "x86_64",
+    "test_executable_architecture": "arm64",
+    "test_executable_inspection": "Mach-O 64-bit executable arm64"
+  },
+  "validation": {
+    "full_standalone_methods": 45,
+    "assertion_failures": 0,
+    "generated_project": "PASS",
+    "local_xctest": "NOT RUN: Command Line Tools only",
+    "hosted_pr_validation": "PENDING",
+    "screen_capture": "NOT RUN; no screen APIs invoked",
+    "external_handoff": "NOT RUN; no applications opened"
+  },
+  "observations": {
+    "empty.png": {
+      "source_bytes_hex": "",
+      "payloads": [
+        ""
+      ],
+      "route": "plainText(\"\")"
+    },
+    "binary.png": {
+      "source_bytes_hex": "fffe80c000",
+      "payloads": [
+        null
+      ],
+      "route": "unsupported"
+    },
+    "mixed-text-binary.png": {
+      "payloads": [
+        "https://example.com/mixed",
+        null
+      ],
+      "observation_count": 2,
+      "reading_order": "text above binary"
+    },
+    "no-code.png": {
+      "payloads": []
+    }
+  },
+  "fixture_integrity": "CIQRCodeDescriptor codewords verified as short byte-mode single segment with expected byte count, exact source bytes and terminator. Vision payloadData was not assumed to be message bytes.",
+  "sha256": {
+    "scripts/generate-fixtures.swift": "5cd409f8c6bc5e11df8193112b88e48545d8befdf26497730807a4b51418eb36",
+    "QRSnapTests/DecoderFixtureTests.swift": "5a1b43f059d6e2f3547bce64fb1a25d1298e72fa7bed0189b504a711e41d3371",
+    "QRSnapTests/Support/StandaloneRunner.swift": "26721ecf5acf66ce326608074fb2ed3274ce65e4937a4ee15f33680b43afdcb3",
+    "QRSnapTests/Fixtures/manifest.json": "11bf90bd65411787198f044da3fd3245e20acff4cfaa0b27d9a00139bf460320",
+    "QRSnapTests/Fixtures/empty.png": "7d4df8698e3d8b9f2d9590e9b97367080e23eddea88d0236b266ae59e5b945fc",
+    "QRSnapTests/Fixtures/binary.png": "0f17a8f6da502ad5d8f5062eff79463f2170f6f0b4e85ac401e9ea036d0bdfcd",
+    "QRSnapTests/Fixtures/mixed-text-binary.png": "e83db0fb4636160e7c98a5f36a9f22050a524f909c8ff52fd41c021441e151c0"
+  },
+  "sandbox_entitlements_changed": false,
+  "production_sources_changed": false
+}

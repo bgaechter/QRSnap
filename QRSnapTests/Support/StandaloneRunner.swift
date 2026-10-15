@@ -97,6 +97,7 @@ struct TestFailure: Error {}
         if !CommandLine.arguments.contains("--core-only") {
             let decoder = DecoderFixtureTests()
             await run("vision.baseline", decoder.testSupportedBaselineAndNegativeImages)
+            await run("vision.empty-unsupported", decoder.testEmptyAndUnsupportedObservationsRemainDistinct)
             await run("vision.characterization", decoder.testCharacterizationRecordsObservedCounts)
         }
         print("\(TestResults.count) tests, \(TestResults.failures) assertion failures")
