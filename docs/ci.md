@@ -1,8 +1,34 @@
 # macOS pull-request validation
 
-The `macOS validation` workflow runs on pull requests, including stacked PRs targeting a feature branch, and pushes to `main`. Pull requests test GitHub's proposed merge commit. A manual run is available once the workflow is on the default branch. The CI change is now stacked on `feature/payload-dispatch` ([PR #3](https://github.com/bgaechter/QRSnap/pull/3)), which depends on `feature/scan-coordinator` ([PR #2](https://github.com/bgaechter/QRSnap/pull/2)). This makes the hosted checks cover the combined core implementation before integration.
+The `macOS validation` workflow runs on pull requests, including stacked PRs targeting a feature branch, and pushes to `main`. Pull requests test GitHub's proposed merge commit. A manual run is available on the default branch. At introduction, the CI change was stacked on `feature/payload-dispatch` ([PR #3](https://github.com/bgaechter/QRSnap/pull/3)), which depended on `feature/scan-coordinator` ([PR #2](https://github.com/bgaechter/QRSnap/pull/2)). Those changes are now integrated into `main`; their historical hosted results are retained below.
 
-The job checks that the committed project matches its generator, runs the complete standalone suite with synthetic Vision fixtures, builds the ad-hoc signed app, audits its signature and entitlements, then builds and runs the app-hosted XCTest target. Failures remain failures; there is no automatic fallback to core-only tests or disabled sandboxing. Logs and XCTest result bundles are retained for seven days as workflow artifacts. Build products and caches stay in the runner's checkout.
+The stable `PR validation` job checks that the committed project matches its generator, runs the complete standalone suite with synthetic Vision fixtures, builds the ad-hoc signed app, audits its signature and entitlements, builds and runs the app-hosted XCTest target, then archives and verifies the Xcode Release app. Failures remain failures; there is no automatic fallback to core-only tests or disabled sandboxing. Logs and XCTest result bundles are retained for seven days as workflow artifacts. A separate `QRSnap-adhoc-pr-<tested-commit>-<attempt>` artifact contains the verified Release app ZIP. Build products and caches stay in the runner's checkout.
+
+## Required merge gate
+
+[`../.github/rulesets/main.json`](../.github/rulesets/main.json) defines the repository rule for `main`: changes require a pull request, the branch must be up to date with its base, and the exact `PR validation` check must pass. The check is bound to GitHub Actions (app ID `15368`, verified from this repository's successful check run). Force pushes and branch deletion are blocked, with no bypass actors. Zero approving reviews are required so the repository owner can merge their own validated PRs; this rule does not require a second contributor.
+
+**Committing this JSON does not activate branch protection.** Repository rules are a separate GitHub setting, and the connected GitHub App does not provide administration access. After the renamed check appears and passes on this implementation PR, an administrator can open **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, select `main.json`, review it and save it with enforcement **Active**. This can be enabled before merging the implementation PR.
+
+Alternatively, from a checkout containing this file, using an administrator's authenticated GitHub CLI with repository Administration write permission:
+
+```sh
+gh api --method POST repos/bgaechter/QRSnap/rulesets \
+  --input .github/rulesets/main.json
+gh api repos/bgaechter/QRSnap/rulesets
+```
+
+Import/create it once; update the existing ruleset instead of creating duplicates. Verify the saved rule targets only `refs/heads/main`, is active, and requires `PR validation` from GitHub Actions with strict status checks. Keep that job name stable across runner/Xcode upgrades. All PR bases remain enabled in the workflow for stacked changes. Merge queues are not enabled; add the `merge_group` trigger before adopting them.
+
+## Release archive and reviewer artifact
+
+`bash scripts/ci-check.sh archive` runs `xcodebuild archive` with the shared `QRSnap` scheme and Release configuration in a unique `.build/ci/archive-*` directory. It verifies the actual app under `QRSnap.xcarchive/Products/Applications`, including the original Xcode signature, exact App Sandbox entitlements and macOS 14.0 deployment floor. The separate optimized command-line build remains covered by the `app` stage.
+
+Xcode can disable Hardened Runtime for ad-hoc signing. After auditing the original archive, the archive stage explicitly applies an ad-hoc signature with Hardened Runtime and the repository's sandbox entitlements, then strictly verifies that final app again. This checks the final packaging/signing operation without implying that Xcode supplied the final runtime flag. Original and final signature/entitlement reports are retained with the logs.
+
+The final app is zipped using `ditto --keepParent` to preserve executable permissions and the bundle layout. Download the `QRSnap-adhoc-pr-<tested-commit>-<attempt>` artifact from the workflow run, then extract its inner `QRSnap-adhoc-pr.zip`. Uploading the app requires successful validation; diagnostic logs are retained even when a stage fails. Local archive reruns use fresh directories and preserve earlier archives and ZIPs; stage and signature logs are refreshed for the latest invocation.
+
+The app is an ad-hoc PR test build for the architectures recorded by Xcode, not a Developer ID-signed or notarized distribution. Packaging does not launch it, request screen access, or accept any manual runtime gate. Developer ID signing, notarization, clean-install testing and G0/G6 acceptance remain separate release work.
 
 ## Environment and reproduction
 
@@ -14,7 +40,7 @@ On a Mac with full Xcode installed and its initial setup completed:
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer bash scripts/ci-check.sh
 ```
 
-Individual stages are `environment`, `project`, `fixtures`, `app` and `xcode`, for example `bash scripts/ci-check.sh project`. Project checks regenerate in a temporary copy and preserve local project edits. Artifacts are written under `.build/ci`; the command-line build also uses `build/QRSnap.app`. The `xcode` stage uses [`xcodebuild test`](https://developer.apple.com/library/archive/technotes/tn2339/_index.html), which builds the app and test bundle before running tests. XCTest and Vision need a working macOS GUI/graphics environment; Command Line Tools alone do not satisfy the Xcode stage.
+Individual stages are `environment`, `project`, `fixtures`, `app`, `xcode` and `archive`, for example `bash scripts/ci-check.sh project`. Project checks regenerate in a temporary copy and preserve local project edits. Artifacts are written under `.build/ci`; the command-line build also uses `build/QRSnap.app`. The `xcode` stage uses [`xcodebuild test`](https://developer.apple.com/library/archive/technotes/tn2339/_index.html), which builds the app and test bundle before running tests. XCTest and Vision need a working macOS GUI/graphics environment; Command Line Tools alone do not satisfy the Xcode stages.
 
 ## Permissions and evidence boundaries
 
