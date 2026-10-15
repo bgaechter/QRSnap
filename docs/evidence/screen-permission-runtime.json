@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-14",
+  "source_base_commit": "47c2481c228cc406f15251f4752770927fd5524b",
+  "app_path": "/Users/benny/.codex/worktrees/screen-permission/QRSnap/build/QRSnap.app",
+  "executable_sha256": "2e2469336d23901082c47560c7de4ee8154668dc9fee5072afc868b5d15cc338",
+  "runtime_sources_sha256": {
+    "QRSnap/App/AppDelegate.swift": "b741f09fb6283c60a13a299194302c56608b981369e8e5dac156ba305a26ea33",
+    "QRSnap/App/GlobalShortcut.swift": "c66072a64993bc07971eaa795596bf4a1add0af88aba00dca629c5ab36090760",
+    "QRSnap/App/Main.swift": "a4a5df5ad164b0d908a3c9ca3af439501070c935cc2ce200b16b13798b8d2307",
+    "QRSnap/Capture/ScreenCaptureService.swift": "f55a83b8ef3942219ab4995eec0d668d51e428412593611fbb51eaaa7ad59b38",
+    "QRSnap/Decode/QRDecoder.swift": "13ea2d6c10a2338a2ed6b466ff31923d49e091e5c130311bf528372da64e0a4a",
+    "QRSnap/Routing/PayloadClassifier.swift": "8c1396dd7e185532d826ee7a27c596ea5cc04b7ed55848c41dbacdf7ef9ba141",
+    "QRSnap/Routing/TextDocumentStore.swift": "60bac46633d40af3b8ac022df21c5f87e94dc6798bffaddd2b0be1577bab122e",
+    "QRSnap/Scan/ScanModels.swift": "196cdd4ba1e30982e1ac0d117f5166c30e07416bb877b59d9b10dcb4ff686a6d",
+    "QRSnap/Scan/SessionLifecycle.swift": "b602e21009cf48085a6fa7269e6141e0e3fb37e1115f8dbb0b7d0c4fce231ce8",
+    "QRSnap/Selection/G0MarkerEvidence.swift": "228ef9df93d3fef0f453be3d2a73626fa1095c3baa25e90ccc6ab2640230d745",
+    "QRSnap/Selection/GeometryAdapter.swift": "be2fd337ceb3e6c570ddaa718f026327c5bc4c2184dbf27d71499f700089f636",
+    "QRSnap/Selection/SelectionOverlay.swift": "45d082b89ac9a6969f4f50f9f082086a253326c99c6bfe31a1a0eaea2e0566e9"
+  },
+  "signature": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"https://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>\nExecutable=/Users/benny/.codex/worktrees/screen-permission/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap\nIdentifier=local.benny.QRSnap\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=1171 flags=0x10002(adhoc,runtime) hashes=26+7 location=embedded\nHash type=sha256 size=32\nCandidateCDHash sha256=b40106c537e85ed14464fbf68a07b83f792ecb0f\nCandidateCDHashFull sha256=b40106c537e85ed14464fbf68a07b83f792ecb0f9843ff83df893ffd2b7c83b1\nHash choices=sha256\nCMSDigest=b40106c537e85ed14464fbf68a07b83f792ecb0f9843ff83df893ffd2b7c83b1\nCMSDigestType=2\nCDHash=b40106c537e85ed14464fbf68a07b83f792ecb0f\nSignature=adhoc\nInfo.plist entries=11\nTeamIdentifier=not set\nRuntime Version=26.5.0\nSealed Resources version=2 rules=13 files=3\nInternal requirements count=0 size=12\n",
+  "signature_verified": true,
+  "screen_capture_grant_cdhash": "b40106c537e85ed14464fbf68a07b83f792ecb0f",
+  "screenshots_saved": false,
+  "payloads_logged": false,
+  "permission_diagnosis": {
+    "stale_grant_cdhash": "4a6c142ee0eb0315a65fbe8436b65e424c4e1932",
+    "original_app_cdhash": "6134346698257e0a0f14f9214eaadd41ea829a2d",
+    "validity_status_before": -67050,
+    "diagnostic_app_cdhash": "5b996d5756665d2691736d3ba1efecdf8bd082c8",
+    "preflight_before_repair": false,
+    "framework_error_domain": "SCStreamErrorDomain",
+    "framework_error_code_before": -3801,
+    "after_repair": {
+      "preflight": true,
+      "query": "accepted",
+      "matching_requirement": true
+    },
+    "valid_signing_identities": 0,
+    "method": "User-approved System Settings replacement of QRSnap only; no TCC database edits."
+  },
+  "display": {
+    "id": 1,
+    "logical_width": 1512,
+    "logical_height": 982,
+    "scale": 2,
+    "external_display_available": false
+  },
+  "crop": {
+    "source_rect_top_left_points": [
+      28,
+      127,
+      400,
+      400
+    ],
+    "output_pixels": [
+      800,
+      800
+    ],
+    "marker_bounds_inclusive": [
+      [
+        20,
+        20,
+        35,
+        35
+      ],
+      [
+        764,
+        20,
+        779,
+        35
+      ],
+      [
+        20,
+        764,
+        35,
+        779
+      ],
+      [
+        764,
+        764,
+        779,
+        779
+      ]
+    ],
+    "max_edge_error_px": 0,
+    "measured_directions": [
+      "top-left to bottom-right",
+      "bottom-left to top-right"
+    ],
+    "all_four_directions_exact_qr_and_dimensions": true,
+    "right_origin_measurement": "incomplete; automation pointer glow overlaps corner"
+  },
+  "freshness": {
+    "ordering": [
+      "phase B visible",
+      "invoke selection",
+      "change source to phase A",
+      "overlay remains active",
+      "drag and release",
+      "capture phase A with zero-error bounds"
+    ],
+    "during_held_drag": "NOT RUN"
+  },
+  "hotkey": {
+    "second_registration_while_app_enabled": -9878,
+    "after_disable": 0,
+    "app_registration_while_probe_holds": -9878,
+    "scan_fallback_and_escape": true,
+    "probe_unregister": 0,
+    "after_app_restart": 0,
+    "physical_invocation_and_escape": "USER OBSERVED PASS",
+    "fullscreen_space_and_escape": "USER OBSERVED PASS"
+  },
+  "permission_revocation_recovery": {
+    "revoked_and_restarted": "explanation before selection; Cancel returns to controls",
+    "restored_and_restarted": "actual capture, phase B, max edge error 0",
+    "grant_left_enabled": true
+  },
+  "text_handoff": {
+    "default_app": "TextEdit",
+    "utf8_exact": true,
+    "byte_count": 66,
+    "file_mode": "0600",
+    "directory_mode": "0700",
+    "retained_after_editor_close_and_app_restart": true,
+    "sha256": "641a09e97fca2f7a4656b6763769e7ebdf47449f28a4c99f2a1d6a52d9fd479c"
+  },
+  "integrated_validation": {
+    "base": "3afaa4a",
+    "standalone_methods": 44,
+    "failures": 0,
+    "app_build": "PASS; build/validation/QRSnap.app, not launched",
+    "project_check": "PASS",
+    "local_xcode": "NOT RUN; Command Line Tools only",
+    "runtime_binary_unchanged": true,
+    "hosted_ci": {
+      "run_id": 38643183564,
+      "url": "https://github.com/bgaechter/QRSnap/actions/runs/38643183564",
+      "source_commit": "3ac74523ec2a2f078c9b5c8caea2fcd3fdf7a95a",
+      "job": "macOS 15 / Xcode 16.4",
+      "result": "PASS",
+      "stages": [
+        "generated project",
+        "standalone contracts and Vision",
+        "sandbox app build and audit",
+        "app-hosted XCTest"
+      ],
+      "gui_capture_tested": false
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Local feasibility runtime — 14 October 2026
 
-**G0 remains open.** The signed sandbox app opened the synthetic text document successfully in the actual default editor. Screen capture remains blocked by an unavailable permission check after the user authorized the exact test build and it was relaunched. No crop, overlay-exclusion, or shortcut result is claimed.
+**Historical result; superseded by the [permission repair and runtime follow-up](screen-permission-runtime.md).** G0 remains open for the outstanding matrix. This earlier run opened the synthetic text document successfully but capture stayed blocked. The follow-up diagnoses the stale code-signing requirement and records successful capture without disabling the sandbox. The observations below retain their original scope.
 
 ## Build and scope
 
