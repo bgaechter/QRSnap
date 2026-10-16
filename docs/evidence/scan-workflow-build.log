@@ -1,0 +1,19 @@
+/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app: replacing existing signature
+/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app: valid on disk
+/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app: satisfies its Designated Requirement
+Built /Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app (arm64). Build does not launch the app.
+Ad-hoc builds have a code-hash identity. Rebuilding may invalidate an existing Screen Recording grant.
+Keep an authorized runtime build unchanged; see docs/screen-permission-runtime.md.
+Executable=/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap
+warning: Specifying ':' in the path is deprecated and will not work in a future release
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>
+Executable=/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap
+Identifier=local.benny.QRSnap
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=1491 flags=0x10002(adhoc,runtime) hashes=36+7 location=embedded
+Signature=adhoc
+Info.plist entries=11
+TeamIdentifier=not set
+Runtime Version=26.5.0
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12

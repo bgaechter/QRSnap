@@ -1,5 +1,11 @@
 # Implementation handoff
 
+## Latest follow-up — scan-to-open core composition
+
+[PR #8](https://github.com/bgaechter/QRSnap/pull/8) was reviewed without blocking findings and merged with its required check green as `4638634`. The next independent slice connects the real coordinator and dispatcher in `ScanWorkflow`: automatic single-result routing, explicit multi-result choice, renewed custom-handler confirmation, blocked-text actions, retained failure data and session-safe cancellation. The feasibility UI remains unchanged. See [behavior, evidence and remaining gates](scan-workflow.md).
+
+Worktree: `/Users/benny/.codex/worktrees/scan-open-workflow/QRSnap`; branch: `feature/scan-open-workflow`, based on merged main `4638634`. The independent test agent contributed commit `7e60ac9` from `feature/scan-workflow-tests`; its test file is integrated here. The final local suite passes 58 methods (13 new workflow cases), generated-project/plist checks pass, and the sandboxed hardened app builds and verifies. Hosted Xcode results belong to the feature PR's required check. G0 remains open; this is core/mock evidence, not production GUI or release acceptance. The authorized runtime executable's SHA-256 still matches `2e2469336d23901082c47560c7de4ee8154668dc9fee5072afc868b5d15cc338`.
+
 ## Latest follow-up — A1 empty/binary fixtures
 
 PR #7 is merged and reviewed without blocking findings; its final CI run passed. The next unblocked task adds real empty, binary and mixed QR fixtures with optional expectations and encoded-byte integrity checks. See [A1 evidence](decoder-edge-fixtures.md). Worktree: `/Users/benny/.codex/worktrees/decoder-edge-fixtures/QRSnap`, branch `feature/decoder-edge-fixtures`, based on `91198dc`. Full standalone suite: 45 methods passing. Production code, sandbox entitlements and the frozen authorized runtime app are unchanged. G0's remaining matrix and production composition remain explicit dependencies.

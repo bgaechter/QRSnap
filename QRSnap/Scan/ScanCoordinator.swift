@@ -114,6 +114,13 @@ import Foundation
         return finish(sessionID, reason: .openingFinished)
     }
 
+    /// Ends result handling, including failures before a launcher was called.
+    /// Composition retains any original text/document needed by its recovery UI.
+    @discardableResult public func failResult(sessionID: UUID, failure: ScanFailure) -> Bool {
+        guard lifecycle.contains(sessionID), phase == .reviewing || phase == .opening else { return false }
+        return finish(sessionID, reason: .failed(failure))
+    }
+
     private func isProcessing(_ token: UUID) -> Bool {
         lifecycle.contains(token) && (phase == .capturing || phase == .decoding)
     }
