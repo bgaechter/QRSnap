@@ -1,4 +1,4 @@
-# Implementation evidence — 14 October 2026
+# Implementation evidence — updated 15 October 2026
 
 **A0 is started, not accepted. G0 remains open.** A1 has independent core/fixture evidence. A2–A6 acceptance is pending. Original planning evidence remains in [04-evidence-and-verification.md](../04-evidence-and-verification.md); do not confuse it with implementation results here.
 
@@ -11,10 +11,10 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 | Local signature | PASS | Ad-hoc signature, strict verification, App Sandbox and Hardened Runtime. [Runtime signature](evidence/screen-permission-runtime.json) and [integrated build](evidence/screen-permission-build.log). No Developer ID/notarization claim. |
 | Xcode project/plist syntax and hosted XCTest | PASS | Generated project checked; [PR #7 hosted run](https://github.com/bgaechter/QRSnap/actions/runs/38643183564) passed including app-hosted XCTest. Local full Xcode is unavailable. Hosted tests do not establish screen permission or signed GUI runtime acceptance. |
 | Core behavior | PASS | 42 standalone core methods, including coordinator race mocks, guarded dispatcher mocks, geometry, marker measurement and retained text. Pure/mocked evidence does not establish production composition. |
-| Vision baseline | PASS on this machine | 12 positive PNG fixtures plus one no-code image. Exact optional payload arrays, including two-code reading order. HTTP(S), multilingual/emoji, multiline, escaped URL, custom/mailto, Wi-Fi and credentials-like synthetic text, rotation and inversion. |
+| Vision baseline | PASS on this machine | 12 original positive PNG fixtures, one no-code image and three new empty/binary/mixed fixtures. Exact optional payload arrays and reading order. [A1 follow-up](decoder-edge-fixtures.md). |
 | Vision characterization | OBSERVED | Dense (1, exact), small (1, exact), cropped (0), damaged (0). Four isolated samples do not locate a general reliability boundary. |
-| Full standalone suite | PASS | [44 methods, zero assertion failures](evidence/screen-permission-tests.log), using graphics-service access outside the agent command sandbox. No test opens another application. The earlier 19-method log is historical. |
-| Empty/binary observations | PARTIAL | Pure nil/empty classification covered. No real binary/empty QR observation fixture yet. |
+| Full standalone suite | PASS | [45 methods, zero assertion failures](evidence/decoder-edge-tests.log), using graphics-service access outside the agent command sandbox. No test opens another application. Earlier logs retain their historical scope. |
+| Empty/binary observations | PASS for named fixtures | Real QR images yield empty text, nil text, and mixed supported/unsupported observations. Encoded fixture bytes, observation count/order, unique IDs and typed classification verified. [Evidence](decoder-edge-fixtures.md). |
 | G0 capture/permission/shortcut/Spaces | PARTIAL PASS | Stale ad-hoc grant diagnosed and repaired. Actual sandbox capture, zero-error 2× marker mapping, visual overlay exclusion, post-invocation freshness, cancellation, shortcut/conflict, revoke/recover pass. Physical shortcut and full-screen Space checks are user-observed. Remaining matrix is explicit in the [follow-up](screen-permission-runtime.md). |
 | G0 external `.txt` access | PASS on this host | TextEdit rendering, exact 66 UTF-8 bytes, 0600/0700 and retention after editor close and QRSnap restart verified again. Other editors/OS versions NOT RUN. [Follow-up](screen-permission-runtime.md). |
 | Coordinator races / production composition | MOCKS PASS / GUI NOT RUN | Delayed capture/decode/launcher and stale-session tests pass. Production coordinator and dispatcher are still not composed into the feasibility UI. |
@@ -26,7 +26,7 @@ Environment: macOS 26.5.2 (25F84), arm64, Apple Swift 6.3.3, macOS SDK 26.5, sel
 - **U1 / U3:** supported for the named 2× host checks, open for the remaining [manual matrix](manual-tests.md). Grant mismatch is resolved; do not extrapolate to unavailable OS/display configurations.
 - **U2:** background physical invocation, full-screen invocation, exclusive collision and unregister behavior pass on this host. Alternate layout and broader conflict behavior remain open.
 - **U4:** supported on this host by signed sandbox runtime handoff to TextEdit, visual content, exact UTF-8 and retained-file checks. Other default editors and OS versions remain open.
-- **U5:** native Vision supports the current synthetic baseline on this host. Deployment-floor coverage and unsupported-payload fixtures remain open; G1 is not fully accepted.
+- **U5:** native Vision supports the current synthetic baseline, including empty and unsupported observations, on this host. Deployment-floor and broader decoder reliability remain unverified; fixture success does not imply universal QR support.
 - **U6:** session identity and mocked late-callback/launch tests pass. Production GUI composition and performance remain open.
 - **U7:** local sandboxed, hardened capture and text handoff pass on this host. Supported OS/architecture coverage and distribution remain open.
 

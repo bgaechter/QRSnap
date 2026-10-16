@@ -1,5 +1,9 @@
 # Implementation handoff
 
+## Latest follow-up — A1 empty/binary fixtures
+
+PR #7 is merged and reviewed without blocking findings; its final CI run passed. The next unblocked task adds real empty, binary and mixed QR fixtures with optional expectations and encoded-byte integrity checks. See [A1 evidence](decoder-edge-fixtures.md). Worktree: `/Users/benny/.codex/worktrees/decoder-edge-fixtures/QRSnap`, branch `feature/decoder-edge-fixtures`, based on `91198dc`. Full standalone suite: 45 methods passing. Production code, sandbox entitlements and the frozen authorized runtime app are unchanged. G0's remaining matrix and production composition remain explicit dependencies.
+
 ## Latest follow-up — screen permission repair
 
 PRs #2–#5 are merged; [PR #7](https://github.com/bgaechter/QRSnap/pull/7) is based on main `3afaa4a`. Worktree: `/Users/benny/.codex/worktrees/screen-permission/QRSnap`, branch `fix/screen-permission`. Ordinary SSH push succeeded for this branch. The [runtime follow-up](screen-permission-runtime.md) diagnoses the stale ad-hoc code requirement and records successful sandboxed capture, zero-error 2× marker mapping, visual exclusion, freshness, shortcut/conflict, revocation recovery, user-observed full-screen Space behavior and TextEdit handoff. G0 remains open for the named outstanding matrix; automatic dispatch and production UI composition remain unimplemented.

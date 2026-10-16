@@ -1,0 +1,7 @@
+::group::QRSnap CI: project
+Generated QRSnap.xcodeproj
+Generated project and shared scheme match the generator.
+QRSnap.xcodeproj/project.pbxproj: OK
+QRSnap/App/Info.plist: OK
+QRSnap/App/QRSnap.entitlements: OK
+::endgroup::

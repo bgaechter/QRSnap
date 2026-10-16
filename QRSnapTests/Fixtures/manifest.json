@@ -92,6 +92,38 @@
     ]
   },
   {
+    "file" : "empty.png",
+    "kind" : "payload-edge",
+    "payloads" : [
+      ""
+    ],
+    "sourcePayloadsHex" : [
+      ""
+    ]
+  },
+  {
+    "file" : "binary.png",
+    "kind" : "payload-edge",
+    "payloads" : [
+      null
+    ],
+    "sourcePayloadsHex" : [
+      "fffe80c000"
+    ]
+  },
+  {
+    "file" : "mixed-text-binary.png",
+    "kind" : "payload-edge",
+    "payloads" : [
+      "https://example.com/mixed",
+      null
+    ],
+    "sourcePayloadsHex" : [
+      "68747470733a2f2f6578616d706c652e636f6d2f6d69786564",
+      "fffe80c000"
+    ]
+  },
+  {
     "file" : "cropped.png",
     "kind" : "characterization",
     "payloads" : [
