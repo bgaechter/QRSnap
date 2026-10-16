@@ -19,6 +19,7 @@ import AppKit
     private var permissionCheckBusy = false
     private var shortcutButton: NSButton?
     private var shortcutMenuItem: NSMenuItem?
+    private var resultPreview: SyntheticResultPreviewController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -26,6 +27,7 @@ import AppKit
         let menu = NSMenu()
         add("Scan QR code…", #selector(scan), to: menu)
         add("Show test controls…", #selector(showControls), to: menu)
+        add("Preview result workflow…", #selector(previewResults), to: menu)
         add("Diagnose screen access…", #selector(diagnoseScreenAccess), to: menu)
         add("Enable test shortcut (⌃⇧Q)", #selector(toggleShortcut(_:)), to: menu)
         shortcutMenuItem = menu.items.last
@@ -51,7 +53,7 @@ import AppKit
             controlsWindow.makeKeyAndOrderFront(nil)
             return
         }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 470),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 520),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "QRSnap — Feasibility checks"
         window.isReleasedWhenClosed = false
@@ -70,6 +72,8 @@ import AppKit
         textButton.bezelStyle = .rounded
         let diagnosticButton = NSButton(title: "Diagnose screen access…", target: self, action: #selector(diagnoseScreenAccess))
         diagnosticButton.bezelStyle = .rounded
+        let previewButton = NSButton(title: "Preview result workflow…", target: self, action: #selector(previewResults))
+        previewButton.bezelStyle = .rounded
         let shortcutButton = NSButton(checkboxWithTitle: "Enable test shortcut (⌃⇧Q)", target: self, action: #selector(toggleShortcut(_:)))
         shortcutButton.state = shortcutEnabled ? .on : .off
         self.shortcutButton = shortcutButton
@@ -77,7 +81,7 @@ import AppKit
         quitButton.bezelStyle = .rounded
         let help = NSTextField(wrappingLabelWithString: "Control-Shift-Q can be enabled from the QR menu-bar icon. Text test documents are retained until you remove them; use Show scanned text files from the menu.")
         help.textColor = .secondaryLabelColor
-        for view in [title, detail, scanButton, diagnosticButton, shortcutButton, textButton, help, quitButton] { stack.addArrangedSubview(view) }
+        for view in [title, detail, scanButton, diagnosticButton, shortcutButton, textButton, previewButton, help, quitButton] { stack.addArrangedSubview(view) }
         let content = NSView()
         content.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -108,6 +112,7 @@ import AppKit
 
     @objc private func scan() {
         guard session.phase == .idle, !permissionCheckBusy else { return }
+        resultPreview?.dismiss()
         reportWindow?.close()
         guard permission.isGranted else {
             let prompt = NSAlert()
@@ -149,6 +154,21 @@ import AppKit
             permissionCheckBusy = false
             message("Screen access diagnostic", report)
         }
+    }
+
+    @objc private func previewResults() {
+        guard session.phase == .idle, !permissionCheckBusy, !handoffBusy else { return }
+        let prompt = NSAlert()
+        prompt.messageText = "Preview the result workflow"
+        prompt.informativeText = "Try the chooser, destination confirmation and error recovery with synthetic QR results. This preview does not capture your screen or open another application. Open actions intentionally show a simulated failure so you can try recovery. Copy changes the clipboard; Save writes the displayed text only after you choose a destination."
+        prompt.addButton(withTitle: "Show synthetic results")
+        prompt.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        guard prompt.runModal() == .alertFirstButtonReturn else { return }
+        reportWindow?.close()
+        controlsWindow?.orderOut(nil)
+        if resultPreview == nil { resultPreview = SyntheticResultPreviewController() }
+        resultPreview?.start()
     }
 
     private func runCapture(_ selection: Selection) {
@@ -323,6 +343,7 @@ import AppKit
     @objc private func quit() { NSApp.terminate(nil) }
     func applicationWillTerminate(_ notification: Notification) {
         cancel()
+        resultPreview?.dismiss()
         shortcut.unregister()
         reportWindow?.close()
     }

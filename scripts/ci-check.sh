@@ -73,8 +73,10 @@ import sys
 
 app, prefix, require_runtime = sys.argv[1:]
 entitlements = plistlib.loads(Path(f"{prefix}-entitlements.plist").read_bytes())
-if entitlements != {"com.apple.security.app-sandbox": True}:
-    raise SystemExit("Unexpected signed entitlements; expected only App Sandbox.")
+expected = {"com.apple.security.app-sandbox": True,
+            "com.apple.security.files.user-selected.read-write": True}
+if entitlements != expected:
+    raise SystemExit("Unexpected signed entitlements; expected App Sandbox and user-selected file access for Save.")
 signature = Path(f"{prefix}-signature.log").read_text()
 if "Signature=adhoc" not in signature:
     raise SystemExit("Expected an ad-hoc signature.")
