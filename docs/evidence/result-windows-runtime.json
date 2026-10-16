@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-16",
+  "base_commit": "c710a8a0875019cac6373efe33f52035ee4e981a",
+  "branch": "feature/result-windows",
+  "environment": {
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84",
+    "executable_architecture": "/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap: Mach-O 64-bit executable arm64",
+    "swift": "Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)\nTarget: x86_64-apple-macosx26.0",
+    "developer_directory": "/Library/Developer/CommandLineTools"
+  },
+  "source_sha256": {
+    "QRSnap/App/AppDelegate.swift": "628a0da70e20351dd4be19f4bac1ec853a69deac9c22994f4e5826e3ac8a9b6d",
+    "QRSnap/App/GlobalShortcut.swift": "c66072a64993bc07971eaa795596bf4a1add0af88aba00dca629c5ab36090760",
+    "QRSnap/App/Info.plist": "c43cb9d2b9bde838f0fbad6c6b21e987a69acd2e97672f53b86d659a457c6433",
+    "QRSnap/App/Main.swift": "a4a5df5ad164b0d908a3c9ca3af439501070c935cc2ce200b16b13798b8d2307",
+    "QRSnap/App/QRSnap.entitlements": "da63c1b6990ef8cb730e86abc24b5ea9991662a5c1076e666892f80e10fcc073",
+    "QRSnap/App/ScanResultWindowController.swift": "ad81024a431ec12bc7d9b377de0063196fb743dbb4d6a0c8ebe5d8a8215d373c",
+    "QRSnap/App/SyntheticResultPreviewController.swift": "86e5f945d6f0f8f5ac8bc53ca5d03e9f47025b5a9d83d287ddd0bb6dc539a8c3",
+    "QRSnap/App/WorkspacePayloadLauncher.swift": "4c8a3c1b68245e68ce4a0a47caee7fdec12834a2c12a933da5b7bea25443f6cb",
+    "QRSnap/Capture/ScreenCaptureService.swift": "8b44b706cd3987e7a0b88c2ccb24e4ec0beb2ab5dab540a90f44856a79bef14e",
+    "QRSnap/Decode/QRDecoder.swift": "13ea2d6c10a2338a2ed6b466ff31923d49e091e5c130311bf528372da64e0a4a",
+    "QRSnap/Routing/PayloadClassifier.swift": "8c1396dd7e185532d826ee7a27c596ea5cc04b7ed55848c41dbacdf7ef9ba141",
+    "QRSnap/Routing/PayloadDispatcher.swift": "162e86da32e8bbcc3b5777c55008532ae5e86abe65a0c920b628f398ec8f5204",
+    "QRSnap/Routing/TextDocumentStore.swift": "60bac46633d40af3b8ac022df21c5f87e94dc6798bffaddd2b0be1577bab122e",
+    "QRSnap/Scan/ScanCoordinator.swift": "e32d6fb0db6ff2abc6bf96fc3a7f80d40398c9d7051ae3a4895483fc9033888c",
+    "QRSnap/Scan/ScanModels.swift": "196cdd4ba1e30982e1ac0d117f5166c30e07416bb877b59d9b10dcb4ff686a6d",
+    "QRSnap/Scan/ScanWorkflow.swift": "553c5e30efc5c064e4ebe699a3b310aead9ed3c0c11a92c5ef3f84aa8773bbde",
+    "QRSnap/Scan/SessionLifecycle.swift": "b602e21009cf48085a6fa7269e6141e0e3fb37e1115f8dbb0b7d0c4fce231ce8",
+    "QRSnap/Selection/G0MarkerEvidence.swift": "228ef9df93d3fef0f453be3d2a73626fa1095c3baa25e90ccc6ab2640230d745",
+    "QRSnap/Selection/GeometryAdapter.swift": "be2fd337ceb3e6c570ddaa718f026327c5bc4c2184dbf27d71499f700089f636",
+    "QRSnap/Selection/SelectionOverlay.swift": "45d082b89ac9a6969f4f50f9f082086a253326c99c6bfe31a1a0eaea2e0566e9",
+    "QRSnapTests/ScanResultWindowTests.swift": "c314b3b4c54e511cb7e4bc0b4d851f0a9f84fcacdbbd48ce99eddbd1ca156705"
+  },
+  "final_runtime": {
+    "app": "/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app",
+    "executable_sha256": "e0cf8233b790c9b16fecc2849ecc4d70ca60df7146fb2fb73446dd8b6b725acf",
+    "cdhash": "b4b78a2addfad2837bfffe91ed8df88010caa417",
+    "signature": "ad-hoc; Hardened Runtime verified by ci-check.sh app",
+    "entitlements": {
+      "com.apple.security.app-sandbox": true,
+      "com.apple.security.files.user-selected.read-write": true
+    },
+    "checks_passed": [
+      "Synthetic preview disclosure and seven separate chooser observations",
+      "Visually inspected bounded and whitespace-flattened chooser labels",
+      "Native Unicode recovery text retained",
+      "Native NSSavePanel explicit export; exact 65 UTF-8 bytes",
+      "Native Save cancellation retained text and showed Save cancelled status",
+      "Retry restored chooser",
+      "Custom destination and handler confirmation",
+      "Simulated open failure retained original text",
+      "Escape dismissed recovery window"
+    ],
+    "not_run": [
+      "Actual screen capture with this candidate",
+      "Actual destination application launch",
+      "Real clipboard Copy",
+      "Native file-write failure or stale sheet replacement",
+      "Full keyboard and VoiceOver matrix"
+    ]
+  },
+  "earlier_runtime": {
+    "executable_sha256": "22c24d281d63ce50f616efbc78e25c26da922073438c92a5cd7dd0669a271b67",
+    "cdhash": "91dd4481dd129032df665500f22502a9ac20cd05",
+    "controller_sha256": "c70afbf11fe6dd0d1f4c5bc774d703f64c99d8c3d9e475f7f8c30abc5c1989c6",
+    "checks_passed": [
+      "Preview chooser, confirmation, simulated open failure and Retry",
+      "Native Save export and cancellation",
+      "Blocked text offered only text actions",
+      "Escape cancelled blocked-text presentation"
+    ]
+  },
+  "exports": [
+    {
+      "path": "/private/tmp/QRSnap-synthetic-3B3CD6A1-E8F3-4624-B9F4-96919558C974.txt",
+      "bytes": 65,
+      "sha256": "af1be108a9d22560f31d7e0e79d60c133c8a29dd4816549c857afb0dd81a9a1b",
+      "exact_utf8_match": true
+    },
+    {
+      "path": "/private/tmp/QRSnap-synthetic-final-3B3CD6A1-E8F3-4624-B9F4-96919558C974.txt",
+      "bytes": 65,
+      "sha256": "af1be108a9d22560f31d7e0e79d60c133c8a29dd4816549c857afb0dd81a9a1b",
+      "exact_utf8_match": true
+    }
+  ],
+  "frozen_screen_permission_executable_sha256": "2e2469336d23901082c47560c7de4ee8154668dc9fee5072afc868b5d15cc338",
+  "local_checks": {
+    "standalone_tests": "PASS: 58 methods, 0 assertion failures",
+    "generated_project": "PASS",
+    "application_build_signature_entitlements": "PASS",
+    "hosted_xctest": "NOT RUN locally: full Xcode unavailable; await PR CI"
+  },
+  "gates": "G0 remains open; preview mocks do not establish screen-scan routing or release acceptance"
+}

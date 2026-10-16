@@ -27,3 +27,9 @@ The proof fails if it cannot identify itself for app exclusion. No delay or hide
 ## Test graphics access
 
 The agent command sandbox prevented Core Image fixture rendering and caused Vision requests to fail. The same generator and compiled tests succeeded when run with macOS graphics-service access. Those commands used only synthetic images and temporary text files, with no screen capture, permission request or app handoff. This evidence applies to fixture decoding in the test process; it does not establish runtime behavior of the sandboxed application. The app's sandbox entitlement was retained unchanged.
+
+## Explicit text export — 16 October 2026
+
+A3 requires Copy/Save recovery after a text write or launch failure. The result window uses `NSSavePanel` with a generic `.txt` filename and writes the original UTF-8 value only after the user selects a destination. This adds `com.apple.security.files.user-selected.read-write` alongside `com.apple.security.app-sandbox`; it does not grant arbitrary filesystem access. CI now checks that exact two-key entitlement set. The installed SDK declares the save-panel APIs below the macOS 14 floor.
+
+Each save completion is tied to a result-presentation identity, which remains valid after the scan session ends but is invalidated on dismissal or replacement. A cancelled/stale panel cannot write; write failure leaves the original text available for recovery. This capability is used by the explicit synthetic preview as well as the reusable result controller. The previous authorized screen-capture executable and its grant remain unchanged. Hosted controller tests are separate from the [signed sandbox Save/cancel check](result-windows.md#signed-preview-runtime), which passed on the named host. Native failure/stale-sheet, clipboard and broader accessibility checks remain open.

@@ -1,5 +1,11 @@
 # Implementation handoff
 
+## Latest follow-up — result windows and explicit export
+
+[PR #9](https://github.com/bgaechter/QRSnap/pull/9) was reviewed without blocking findings and merged with its required check green as `c710a8a`. This follow-up adds reusable chooser, custom-destination confirmation and failure-recovery windows, with exact Copy/Save and stale-action guards. An explicit synthetic preview composes them with `ScanWorkflow`; actual screen scans still use the capture-proof path. The requested MIT `LICENSE` is included.
+
+Worktree: `/Users/benny/.codex/worktrees/result-windows/QRSnap`; branch: `feature/result-windows`, based on `c710a8a`. The UI/test agent contributed `f27da81` from `feature/result-window-component`; its two files are integrated here. Local standalone suite: 58 methods passing; project and sandboxed hardened build checks pass. Execution of the eleven additional hosted AppKit tests is recorded in the feature PR's required CI check. Native Save and cancellation passed on the signed preview candidate with exact 65-byte UTF-8 output. App Sandbox remains enabled with narrow user-selected file access for Save. The previous authorized screen-capture binary and its grant are preserved. [Detailed evidence and remaining G0 gates](result-windows.md).
+
 ## Latest follow-up — scan-to-open core composition
 
 [PR #8](https://github.com/bgaechter/QRSnap/pull/8) was reviewed without blocking findings and merged with its required check green as `4638634`. The next independent slice connects the real coordinator and dispatcher in `ScanWorkflow`: automatic single-result routing, explicit multi-result choice, renewed custom-handler confirmation, blocked-text actions, retained failure data and session-safe cancellation. The feasibility UI remains unchanged. See [behavior, evidence and remaining gates](scan-workflow.md).
