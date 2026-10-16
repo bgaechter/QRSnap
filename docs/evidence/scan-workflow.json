@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-16",
+  "base_commit": "46386346ff5f75a16955b9314ba74e9ce393bb7b",
+  "branch": "feature/scan-open-workflow",
+  "test_contribution_commit": "7e60ac9ee69dde5681f77b1d1c502494989acf45",
+  "environment": {
+    "os": "macOS 26.5.2 (25F84)",
+    "shell_architecture": "arm64",
+    "compiler": "Apple Swift 6.3.3",
+    "sdk": "macOS 26.5",
+    "developer_directory": "/Library/Developer/CommandLineTools",
+    "target": "arm64-apple-macosx14.0",
+    "test_binary": ".build/contract-tests: Mach-O 64-bit executable arm64"
+  },
+  "results": {
+    "full_standalone": {
+      "status": "PASS",
+      "methods": 58,
+      "assertion_failures": 0,
+      "new_workflow_methods": 13,
+      "log": "scan-workflow-tests.log"
+    },
+    "build_signature": {
+      "status": "PASS",
+      "app_sandbox": true,
+      "hardened_runtime": true,
+      "signing": "ad hoc",
+      "log": "scan-workflow-build.log"
+    },
+    "generated_project_plists": {
+      "status": "PASS",
+      "log": "scan-workflow-project.log"
+    },
+    "local_hosted_xctest": "NOT RUN: full Xcode unavailable",
+    "new_signed_GUI_workflow": "NOT RUN: UI composition pending",
+    "G0": "OPEN: see ../manual-tests.md and ../screen-permission-runtime.md",
+    "release": "NOT RUN"
+  },
+  "limits": [
+    "Synthetic workflow observations and fake capture/decode/storage/launch boundaries; no real application handoff.",
+    "Vision fixtures require graphics-service access outside the agent command sandbox; app entitlements remain unchanged.",
+    "Hosted CI result belongs to the feature PR check, not this pre-push record."
+  ],
+  "preserved_runtime_executable_sha256": "2e2469336d23901082c47560c7de4ee8154668dc9fee5072afc868b5d15cc338",
+  "source_sha256": {
+    "QRSnap/Scan/ScanWorkflow.swift": "553c5e30efc5c064e4ebe699a3b310aead9ed3c0c11a92c5ef3f84aa8773bbde",
+    "QRSnap/Scan/ScanCoordinator.swift": "e32d6fb0db6ff2abc6bf96fc3a7f80d40398c9d7051ae3a4895483fc9033888c",
+    "QRSnapTests/ScanWorkflowTests.swift": "dd1ca6ed2bc0c64e81cfb75efa054cfce26522bd4358135ac7b6ef756f89310f",
+    "QRSnapTests/Support/StandaloneRunner.swift": "7c0814317559e1a4e3f0b66fe7d272d394b4355b55f1a6d8f50d8641a81320e9",
+    "QRSnap.xcodeproj/project.pbxproj": "d8544a09dacbade6153e8ac0749faade9de3181f250ac3cb63082bd7f75c0b60",
+    "QRSnap/App/QRSnap.entitlements": "30ed70b85aa9563ec91c387b4bedaaf6426a285b26cc59d713e5c9332bc24aef"
+  }
+}

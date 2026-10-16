@@ -13,8 +13,9 @@ These interfaces are fixed for the next milestone. Definitions live in `QRSnap/S
 | `ScreenCapturing` | Main actor, asynchronous one-shot capture; throws typed failure. |
 | `QRDecoding` | Sendable asynchronous boundary; native decoder owns a request per serial-queue job and returns immutable observations. |
 | `ScreenPermissionChecking` | Main actor preflight and explicit request. A request return is not a claim that capture succeeds. |
-| `PayloadLaunching` | Main actor handler lookup and asynchronous handoff result. To be implemented/injected in A3/A4. |
+| `PayloadLaunching` | Main actor handler lookup and asynchronous handoff result. `WorkspacePayloadLauncher` rechecks a session validity predicate at the OS boundary. |
 | `TextDocumentStoring` | Create and retain a unique UTF-8 `.txt` document; file failures become `fileWriteFailed`. |
 | `SessionLifecycle` | One active UUID, legal phase progression, invalidated on cancellation/timeout. Final opening transition can be claimed only once. This value is not a complete production coordinator. |
+| `ScanWorkflow` | Core composition of `ScanCoordinator` and `PayloadDispatcher`. A single observation proceeds automatically; multiple observations require an explicit choice. Session IDs guard chooser actions; fresh request IDs guard each URI confirmation/text-action prompt. Failure events preserve original text and any created document. Permission/window composition and signed GUI acceptance remain separate. |
 
 No image bytes, payloads, URLs, or window titles are logged by the application. Error values carry categories, not decoded data. UI preview limits do not mutate the `DecodedItem` payload. Production copy/save and handoff must use the original value.

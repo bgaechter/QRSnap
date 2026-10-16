@@ -1,6 +1,6 @@
 # QRSnap
 
-Native macOS menu-bar QR reader, targeting macOS 14 and later. **Current milestone: A0 feasibility proof plus independent A1 core implementation. G0 remains open.**
+Native macOS menu-bar QR reader, targeting macOS 14 and later. **Current milestone: A0 feasibility proof plus independent core implementation, including scan-to-open composition. G0 remains open.**
 
 Start with the [planning package](00-READ-ME.md), [implementation plan](03-ai-agent-implementation-plan.md), and [current evidence](docs/claims.md). The five source documents were converted to linked Markdown without dropping requirements. Exact originals are retained in [docs/originals](docs/originals); hashes and the conversion check are in [docs/evidence](docs/evidence).
 
@@ -17,7 +17,7 @@ The build produces `build/QRSnap.app` for the host architecture with App Sandbox
 
 An ad-hoc rebuild can invalidate an existing Screen Recording grant. Preserve an authorized runtime binary by building elsewhere: `APP_OUTPUT_PATH="$PWD/build/validation/QRSnap.app" ./scripts/build-app.sh`. See the [diagnosis and recovery record](docs/screen-permission-runtime.md).
 
-`test.sh` compiles the same test methods as the XCTest target into a standalone runner, so Command Line Tools can execute them without XCTest. `./scripts/test.sh --core-only` runs 42 routing, geometry, marker, session, coordinator, dispatch and storage tests. The full suite runs 45 methods, including Vision against 20 synthetic fixture images and real empty/binary observations. macOS graphics-service access is required: an agent's command sandbox can block Core Image/Vision even though the installed frameworks compile. Run the fixture tests from a normal local terminal or authorize the narrowly scoped test command. This does not require screen-recording permission and does not change the app's entitlements.
+`test.sh` compiles the same test methods as the XCTest target into a standalone runner, so Command Line Tools can execute them without XCTest. `./scripts/test.sh --core-only` runs 55 routing, geometry, marker, session, coordinator, dispatch, workflow and storage tests. The full suite runs 58 methods, including Vision against 20 synthetic fixture images and real empty/binary observations. macOS graphics-service access is required: an agent's command sandbox can block Core Image/Vision even though the installed frameworks compile. Run the fixture tests from a normal local terminal or authorize the narrowly scoped test command. This does not require screen-recording permission and does not change the app's entitlements.
 
 With a full Xcode installation selected, use `QRSnap.xcodeproj` and its shared `QRSnap` scheme, or:
 
@@ -38,7 +38,7 @@ Open `build/QRSnap.app` when ready to run the [manual checks](docs/manual-tests.
 4. **Enable test shortcut (⌃⇧Q)** explicitly registers Control-Shift-Q for this process. Toggle it off or quit to unregister. Background invocation and controlled exclusive-conflict handling passed on the recorded host; alternate keyboard layouts remain untested.
 5. **Open synthetic text in default app…** creates a disclosed, retained UTF-8 test file and asks the default `.txt` handler to open it. Verify the bytes and editor display separately; a handoff callback only reports OS acceptance.
 
-The proof displays scan results. Automatic URL/text dispatch, custom-scheme confirmation, production settings, result chooser and full coordinator integration are later milestones. The pure classifier already implements the planned policy, but the scan UI does not launch decoded content yet.
+The proof displays scan results. The independent [scan-to-open core](docs/scan-workflow.md) connects the coordinator and dispatcher, including automatic URL/text policy, observation choice, URI confirmation and retained failures. Production settings, chooser/confirmation/recovery views and composition into the scan UI remain pending; the feasibility UI does not launch decoded content yet.
 
 ## Retention and limits
 
