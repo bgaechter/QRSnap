@@ -224,7 +224,7 @@ import XCTest
     private func find(_ id: String, in view: NSView?) -> NSView? {
         guard let view else { return nil }
         if view.identifier?.rawValue == id { return view }
-        return view.subviews.lazy.compactMap { find(id, in: $0) }.first
+        return view.subviews.lazy.compactMap { self.find(id, in: $0) }.first
     }
 }
 
