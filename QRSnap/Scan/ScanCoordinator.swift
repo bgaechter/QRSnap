@@ -101,6 +101,12 @@ import Foundation
         finish(sessionID, reason: .failed(.displayChanged))
     }
 
+    /// Surface a rejected drag before capture starts through the same recovery path.
+    @discardableResult public func failSelection(sessionID: UUID, failure: ScanFailure) -> Bool {
+        guard lifecycle.contains(sessionID), phase == .selecting else { return false }
+        return finish(sessionID, reason: .failed(failure))
+    }
+
     /// Claim once, at the handoff boundary. This method does not launch anything.
     /// If the caller awaits after claiming, it must recheck the current token and `.opening`
     /// immediately before invoking its launcher. A cancelled claim is never still valid.
