@@ -38,11 +38,15 @@ Open `build/QRSnap.app` when ready to run the [manual checks](docs/manual-tests.
 4. **Enable test shortcut (⌃⇧Q)** explicitly registers Control-Shift-Q for this process. Toggle it off or quit to unregister. Background invocation and controlled exclusive-conflict handling passed on the recorded host; alternate keyboard layouts remain untested.
 5. **Open synthetic text in default app…** creates a disclosed, retained UTF-8 test file and asks the default `.txt` handler to open it. Verify the bytes and editor display separately; a handoff callback only reports OS acceptance.
 
-The proof displays scan results. The independent [scan-to-open core](docs/scan-workflow.md) connects the coordinator and dispatcher, including automatic URL/text policy, observation choice, URI confirmation and retained failures. Production settings, chooser/confirmation/recovery views and composition into the scan UI remain pending; the feasibility UI does not launch decoded content yet.
+The proof displays scan results. The independent [scan-to-open core](docs/scan-workflow.md) connects the coordinator and dispatcher, including automatic URL/text policy, observation choice, URI confirmation and retained failures. **Preview result workflow…** exercises the reusable chooser, confirmation and recovery windows with synthetic results. Open actions in that preview intentionally simulate failures; they never open another app. Copy and Save are real actions only when you press their buttons. See [result-window evidence and limits](docs/result-windows.md).
+
+Production settings and composition of these windows into actual screen scans remain pending; the feasibility scan UI does not launch decoded content yet. The result-window tests require hosted AppKit/XCTest and are additional to the 58-method standalone suite.
 
 ## Retention and limits
 
-Captured pixels stay in memory, including the proof preview until it closes. Screenshot files are not written. The only intentionally persistent app documents are text files under Application Support / `local.benny.QRSnap` / `Scanned Text` (inside the app container when sandboxed). **Files remain until the user removes them.** The menu exposes their folder. Their names are random UUIDs; UTF-8 content is preserved. Other applications have their own retention policies.
+Captured pixels stay in memory, including the proof preview until it closes. Screenshot files are not written. Automatic text handoffs retain documents under Application Support / `local.benny.QRSnap` / `Scanned Text` (inside the app container when sandboxed). **Files remain until the user removes them.** The menu exposes their folder. Their names are random UUIDs; UTF-8 content is preserved. Explicit Save actions export the original UTF-8 text to a user-chosen file; Copy places the original text on the clipboard. Other applications have their own retention policies.
+
+App Sandbox stays enabled. Save uses only the additional user-selected file read/write capability; there is no broad filesystem, network, Apple Events, camera or microphone entitlement.
 
 This build makes no app-originated network requests and contains no analytics or payload logging. The initial selection limit is 16 million output pixels, subject to G0 memory measurements. A gesture cannot span displays. Drag selection is not fully accessible to nonvisual users. The [runtime follow-up](docs/screen-permission-runtime.md) resolves the stale screen grant and records sandboxed capture, exact 2× marker mapping, overlay exclusion, scene freshness, shortcut/conflict checks, user-observed full-screen invocation, revocation recovery and TextEdit handoff. macOS 14/Intel, external displays, arbitrary Space transitions, Stage Manager, the remaining permission/layout matrix, other default apps and release signing remain unverified.
 
@@ -54,3 +58,7 @@ This build makes no app-originated network requests and contains no analytics or
 - `docs/`: implementation decisions, contracts, evidence and manual checks.
 
 Regenerate the project after adding source/test files with `python3 scripts/generate-xcode-project.py`. Regenerate fixtures from the repository root with `xcrun swift scripts/generate-fixtures.swift`; the fixture generator uses Core Image and writes only synthetic PNGs and their manifest.
+
+## License
+
+QRSnap is available under the [MIT License](LICENSE).

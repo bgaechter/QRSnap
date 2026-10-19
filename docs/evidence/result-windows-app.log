@@ -1,0 +1,37 @@
+::group::QRSnap CI: app
+/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app: replacing existing signature
+/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app: valid on disk
+/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app: satisfies its Designated Requirement
+Built /Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app (arm64). Build does not launch the app.
+Ad-hoc builds have a code-hash identity. Rebuilding may invalidate an existing Screen Recording grant.
+Keep an authorized runtime build unchanged; see docs/screen-permission-runtime.md.
+build/QRSnap.app: valid on disk
+build/QRSnap.app: satisfies its Designated Requirement
+Executable=/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap
+Identifier=local.benny.QRSnap
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=1779 flags=0x10002(adhoc,runtime) hashes=45+7 location=embedded
+VersionPlatform=1
+VersionMin=917504
+VersionSDK=1705216
+Hash type=sha256 size=32
+CandidateCDHash sha256=b4b78a2addfad2837bfffe91ed8df88010caa417
+CandidateCDHashFull sha256=b4b78a2addfad2837bfffe91ed8df88010caa417c879bad065c659673e63798a
+Hash choices=sha256
+CMSDigest=b4b78a2addfad2837bfffe91ed8df88010caa417c879bad065c659673e63798a
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=327680
+Executable Segment flags=0x1
+Page size=16384
+CDHash=b4b78a2addfad2837bfffe91ed8df88010caa417
+Signature=adhoc
+Info.plist entries=11
+TeamIdentifier=not set
+Runtime Version=26.5.0
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12
+Executable=/Users/benny/.codex/worktrees/result-windows/QRSnap/build/QRSnap.app/Contents/MacOS/QRSnap
+Verified build/QRSnap.app: ad-hoc signature, App Sandbox and declared macOS 14.0 deployment floor.
+Verified Hardened Runtime.
+::endgroup::
