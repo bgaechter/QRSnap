@@ -45,6 +45,8 @@ Use **Screen access…** for current permission guidance. The [historical screen
 
 Opening the app does not start a scan, request screen permission or open decoded content. Only your explicit scan starts capture. An enabled, previously saved shortcut is restored at launch.
 
+Use **Tab / Shift-Tab** to move between actions and **Space** to activate the focused action. **Command-W** closes a result or settings window. In Settings, **Return** applies changes; while recording a shortcut, **Escape** first cancels recording. **Command-comma** opens Settings and **Command-Q** quits. Result text supports **Command-A**, and Copy/Save preserve the original text. Selection, cancellation, result and settings status updates provide accessibility announcements. The rectangle selection still requires a pointer; live VoiceOver acceptance remains to be checked. [Keyboard and accessibility details](docs/accessibility.md).
+
 ## Privacy and retained text
 
 - Captured pixels stay in memory and are released after processing; screenshots are not saved. QRSnap excludes its own windows from capture, so display QR content in another app.

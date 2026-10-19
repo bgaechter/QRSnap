@@ -53,6 +53,7 @@ import UniformTypeIdentifiers
     private let onAction: (Action) -> Void
     private let textActions: TextActions
     private let presentsWindows: Bool
+    private let announce: @MainActor (String) -> Void
     private var sessionID: UUID?
     private var sessionFinished = false
     private var presentation: Presentation?
@@ -65,10 +66,12 @@ import UniformTypeIdentifiers
     }
 
     init(title: String = "QRSnap", textActions: TextActions, presentsWindows: Bool = true,
+         announce: @escaping @MainActor (String) -> Void = AccessibilityAnnouncements.post,
          onAction: @escaping (Action) -> Void) {
         self.title = title
         self.textActions = textActions
         self.presentsWindows = presentsWindows
+        self.announce = announce
         self.onAction = onAction
         super.init()
     }
@@ -124,7 +127,7 @@ import UniformTypeIdentifiers
                 preview = payload.isEmpty ? "Empty text" : (excerpt.isEmpty ? "Whitespace text" : excerpt) + (payload.count > 160 ? "…" : "")
             } else { preview = "Unsupported: no text payload" }
             let label = makeLabel("QR \(index + 1): \(preview)", id: "result-choice-label-\(item.id)")
-            let choose = button("Choose", id: "result-choose-\(item.id)", label: "Choose QR code \(index + 1)") { [weak self] in
+            let choose = button("Choose", id: "result-choose-\(item.id)", label: "Choose QR code \(index + 1): \(preview)") { [weak self] in
                 self?.send(.choose(sessionID: token, observationID: item.id), presentationID: current.id)
             }
             consumingButtons.append(choose)
@@ -137,8 +140,9 @@ import UniformTypeIdentifiers
             rows.append(row)
         }
         let scroll = choiceScroll(rows)
-        show(current, heading: "Choose a QR code", detail: "Choose one result to continue. Each detected code is listed separately.",
-             body: scroll, buttons: [cancelButton(current)])
+        let cancel = cancelButton(current)
+        show(current, heading: "Choose a QR code", detail: "Choose one result to continue. Tab moves between results; Space chooses the focused result. Each detected code is listed separately.",
+             body: scroll, buttons: [cancel], initialFocus: cancel)
     }
 
     private func showRequest(_ request: ScanWorkflow.ActionRequest) {
@@ -200,7 +204,7 @@ import UniformTypeIdentifiers
     }
 
     private func show(_ current: Presentation, heading: String, detail: String, body: NSView?,
-                      buttons: [NSButton], note: String? = nil) {
+                      buttons: [NSButton], note: String? = nil, initialFocus: NSView? = nil) {
         guard isCurrent(current.id) else { return }
         let result = ScanResultWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: body == nil ? 270 : 510),
                                       styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
@@ -245,7 +249,13 @@ import UniformTypeIdentifiers
         result.contentView = content
         window = result
         status = statusLabel
-        let focus = consumingButtons.first ?? buttons.first
+        var focusOrder: [NSView] = consumingButtons
+        if let text = (body as? NSScrollView)?.documentView as? NSTextView { focusOrder.append(text) }
+        focusOrder.append(contentsOf: buttons)
+        KeyboardFocusLoop.install(in: result, views: focusOrder)
+        // Start a chooser on its payload-free Cancel control. Tab then reaches
+        // the first result; its preview is exposed after explicit navigation.
+        let focus = initialFocus ?? consumingButtons.first ?? buttons.first
         result.initialFirstResponder = focus
         if presentsWindows {
             result.center()
@@ -253,6 +263,9 @@ import UniformTypeIdentifiers
             result.makeKeyAndOrderFront(nil)
             if let focus { result.makeFirstResponder(focus) }
         }
+        // Announce the interface state. The payload is available through its
+        // labelled text view or the bounded preview of a deliberately focused row.
+        announce(heading)
     }
 
     private func send(_ action: Action, presentationID: UUID) {
@@ -260,6 +273,7 @@ import UniformTypeIdentifiers
         current.actionConsumed = true
         consumingButtons.forEach { $0.isEnabled = false }
         updateStatus("Working…", for: presentationID)
+        guard isCurrent(presentationID) else { return }
         onAction(action)
     }
 
@@ -292,6 +306,7 @@ import UniformTypeIdentifiers
         current.saveAttempt = attempt
         saveButton?.isEnabled = false
         updateStatus("Choose where to save the text.", for: id)
+        guard isCurrent(id), current.saveAttempt == attempt else { return }
         let cancelDialog = textActions.chooseSaveURL(window) { [weak self] url in
             guard let self, let active = self.presentation, active.id == id, active.saveAttempt == attempt else { return }
             active.saveAttempt = nil
@@ -334,6 +349,7 @@ import UniformTypeIdentifiers
         guard isCurrent(id), let status else { return }
         status.stringValue = message
         NSAccessibility.post(element: status, notification: .valueChanged)
+        announce(message)
     }
 
     private func cancelButton(_ current: Presentation) -> NSButton {
@@ -359,7 +375,7 @@ import UniformTypeIdentifiers
     }
 
     private func textView(_ text: String) -> NSView {
-        let view = NSTextView(frame: NSRect(x: 0, y: 0, width: 650, height: 230))
+        let view = ScanResultTextView(frame: NSRect(x: 0, y: 0, width: 650, height: 230))
         view.identifier = NSUserInterfaceItemIdentifier("result-text")
         view.isEditable = false
         view.isSelectable = true
@@ -424,7 +440,7 @@ import UniformTypeIdentifiers
     }
 }
 
-@MainActor private final class ScanResultButton: NSButton {
+@MainActor private final class ScanResultButton: KeyboardAccessibleButton {
     private let invoke: () -> Void
     init(title: String, invoke: @escaping () -> Void) {
         self.invoke = invoke
@@ -436,11 +452,49 @@ import UniformTypeIdentifiers
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
     @objc private func pressed() { if isEnabled { invoke() } }
+    override func keyDown(with event: NSEvent) {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        // Result actions have no default Return activation, including a focused
+        // external Open button. Space or the native accessibility action is explicit.
+        if (event.keyCode == 36 || event.keyCode == 76), modifiers.isEmpty { return }
+        super.keyDown(with: event)
+    }
 }
 
 @MainActor private final class ScanResultWindow: NSWindow {
     var onEscape: (() -> Void)?
     override func cancelOperation(_ sender: Any?) { onEscape?() }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if attachedSheet == nil, sheetParent == nil, modifiers == .command,
+           event.charactersIgnoringModifiers?.lowercased() == "w" {
+            performClose(nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
+@MainActor private final class ScanResultTextView: NSTextView {
+    override func keyDown(with event: NSEvent) {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if event.keyCode == 48, modifiers.isEmpty || modifiers == .shift {
+            if modifiers == .shift { window?.selectPreviousKeyView(self) }
+            else { window?.selectNextKeyView(self) }
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if modifiers == .command, event.charactersIgnoringModifiers?.lowercased() == "a" {
+            selectAll(nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }
 
 @MainActor private final class ScanResultDocumentView: NSView {
