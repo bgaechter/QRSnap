@@ -55,7 +55,7 @@ Opening the app does not start a scan, request screen permission or open decoded
 
 ## Validation and current limits
 
-[CI](docs/ci.md) checks deterministic project generation, the standalone core/Vision suite, app signature and exact entitlements, hosted XCTest, and the Xcode Release archive. Its `PR validation` check produces logs, `.xcresult` results and an ad-hoc reviewer app. The standalone suite and hosted suite have different counts because AppKit integration/settings/window tests run only under hosted XCTest.
+[CI](docs/ci.md) checks deterministic project generation, the standalone core/Vision suite, app signature and exact entitlements, hosted XCTest, and the Xcode Release archive. The MVP's [macOS validation run](https://github.com/bgaechter/QRSnap/actions/runs/39202990847) passed **58 standalone tests and 98 hosted XCTest tests**, plus the Release archive checks. Its `PR validation` check produces logs, `.xcresult` results and an ad-hoc reviewer app. The standalone suite and hosted suite have different counts because AppKit integration/settings/window tests run only under hosted XCTest.
 
 ```sh
 ./scripts/test.sh --core-only
