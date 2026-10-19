@@ -17,13 +17,13 @@ The script produces an **ad-hoc signed development app** for the host architectu
 
 You can also download the `QRSnap-adhoc-pr-…` artifact from a successful [GitHub Actions run](https://github.com/bgaechter/QRSnap/actions), then extract its inner `QRSnap-adhoc-pr.zip`. Review the source and validation result for that build. macOS may restrict opening a downloaded ad-hoc app; building locally or using an authorized stable signing identity is preferable for ongoing use.
 
-With full Xcode, open `QRSnap.xcodeproj` and select the shared **QRSnap** scheme. `SIGNING_IDENTITY` can select an existing identity for a deliberate signed build. An ad-hoc rebuild changes the app's identity and can invalidate an existing Screen Recording grant. Keep the authorized test app intact when making another build:
+With full Xcode, open `QRSnap.xcodeproj` and select the shared **QRSnap** scheme. The `build-app.sh` script accepts `SIGNING_IDENTITY` to select an existing identity for a deliberate signed build; configure Xcode signing separately. An ad-hoc rebuild changes the app's identity and can invalidate an existing Screen Recording grant. Keep the authorized test app intact when making another build:
 
 ```sh
 APP_OUTPUT_PATH="$PWD/build/validation/QRSnap.app" ./scripts/build-app.sh
 ```
 
-See the [screen-access diagnosis](docs/screen-permission-runtime.md) if System Settings shows a grant but capture still fails. Do not disable the sandbox or reset system privacy settings to make a build work.
+Use **Screen access…** for current permission guidance. The [historical screen-access diagnosis](docs/screen-permission-runtime.md) explains why System Settings can show a grant while a changed binary still fails; its diagnostic menu belongs to that earlier build. Do not disable the sandbox or reset system privacy settings to make a build work.
 
 ## Use QRSnap
 

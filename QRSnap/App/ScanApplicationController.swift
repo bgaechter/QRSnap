@@ -19,17 +19,18 @@ import AppKit
             SessionEvents { cancel, displayChanged in
                 let keyboard = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                     guard event.keyCode == 53 else { return event }
-                    return MainActor.assumeIsolated {
+                    let consumed = MainActor.assumeIsolated {
                         let window = event.window ?? NSApp.keyWindow
                         // A native Save sheet owns Escape while it is open. Cancelling
                         // Save must preserve the scanned text in its result window.
                         guard handlesEscape(hasModalWindow: NSApp.modalWindow != nil,
                                             hasSheet: window?.sheetParent != nil || window?.attachedSheet != nil) else {
-                            return event
+                            return false
                         }
                         cancel()
-                        return nil
+                        return true
                     }
+                    return consumed ? nil : event
                 }
                 let screen = NotificationCenter.default.addObserver(
                     forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
@@ -56,12 +57,14 @@ import AppKit
     private let showPermissionExplanation: @MainActor () -> Void
     private let beforeSelection: @MainActor () -> Void
     private let onProgress: @MainActor (Bool) -> Void
+    private let onProcessingUI: @MainActor (Bool) -> Void
     private let onEvent: @MainActor (ScanWorkflow.Event) -> Void
     private var workflow: ScanWorkflow!
     private var activeToken: UUID?
     private var presentationToken: UUID?
     private var recoveryToken: UUID?
     private var overlayToken: UUID?
+    private var processingUIToken: UUID?
     private var stopObserving: (@MainActor () -> Void)?
     private var checkingPermission = false
 
@@ -74,6 +77,7 @@ import AppKit
          showPermissionExplanation: @escaping @MainActor () -> Void,
          beforeSelection: @escaping @MainActor () -> Void = {},
          onProgress: @escaping @MainActor (Bool) -> Void = { _ in },
+         onProcessingUI: @escaping @MainActor (Bool) -> Void = { _ in },
          onEvent: @escaping @MainActor (ScanWorkflow.Event) -> Void = { _ in }) {
         self.permission = permission
         self.selection = selection
@@ -81,12 +85,13 @@ import AppKit
         self.showPermissionExplanation = showPermissionExplanation
         self.beforeSelection = beforeSelection
         self.onProgress = onProgress
+        self.onProcessingUI = onProcessingUI
         self.onEvent = onEvent
         resultWindowController = ScanResultWindowController(textActions: textActions, presentsWindows: presentsWindows) {
             [weak self] action in self?.perform(action)
         }
         let captured = ApplicationCapture(destination: capture) { [weak self] token in
-            self?.closeSelection(sessionID: token)
+            self?.captureFinished(sessionID: token)
         }
         workflow = ScanWorkflow(capture: captured, decoder: decoder, textStore: textStore, makeLauncher: makeLauncher,
                                 progressDelay: progressDelay, timeout: timeout, sleep: sleep) { [weak self] event in
@@ -115,7 +120,10 @@ import AppKit
         else {
             recoveryToken = nil
             presentationToken = nil
+            let processingToken = processingUIToken
             resultWindowController.dismiss()
+            if let processingToken { hideProcessingUI(sessionID: processingToken) }
+            guard presentationToken == nil else { return }
             onProgress(false)
         }
     }
@@ -152,6 +160,23 @@ import AppKit
         // Clear ownership before calling an adapter that can synchronously reenter.
         overlayToken = nil
         selection.close()
+    }
+
+    private func captureFinished(sessionID token: UUID) {
+        guard activeToken == token else { return }
+        // The capture attempt has finished. Give the host a key processing panel
+        // before removing selection panels, preserving local Escape handling without
+        // adding that panel to the captured pixels or using a global keyboard monitor.
+        processingUIToken = token
+        onProcessingUI(true)
+        guard activeToken == token else { return }
+        closeSelection(sessionID: token)
+    }
+
+    private func hideProcessingUI(sessionID token: UUID) {
+        guard processingUIToken == token else { return }
+        processingUIToken = nil
+        onProcessingUI(false)
     }
 
     private func receive(_ event: ScanWorkflow.Event) {
@@ -197,8 +222,9 @@ import AppKit
             closeSelection(sessionID: token)
             stop?()
             // Cleanup adapters and callbacks may immediately begin another scan.
-            guard presentationToken == token else { return }
+            guard presentationToken == token else { hideProcessingUI(sessionID: token); return }
             resultWindowController.receive(event)
+            hideProcessingUI(sessionID: token)
             guard presentationToken == token else { return }
             onProgress(false)
             guard presentationToken == token else { return }
@@ -211,6 +237,7 @@ import AppKit
         closeSelection(sessionID: token)
         guard activeToken == token else { return }
         resultWindowController.receive(event)
+        hideProcessingUI(sessionID: token)
         guard activeToken == token else { return }
         onEvent(event)
     }

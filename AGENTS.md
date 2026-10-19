@@ -22,7 +22,7 @@
 
 ## Local development
 
-- `./scripts/build-app.sh` builds and ad-hoc signs the sandboxed feasibility app without launching it.
+- `./scripts/build-app.sh` builds and ad-hoc signs the sandboxed development app without launching it.
 - `./scripts/test.sh --core-only` runs independent contract tests with Command Line Tools. `./scripts/test.sh` includes Vision fixtures and requires macOS graphics-service access; this is separate from the app's sandbox and screen permission.
 - `python3 scripts/generate-xcode-project.py` regenerates the one-app/one-test Xcode project after source/test additions. Full Xcode/XCTest validation must be recorded separately when available.
 - Keep original planning documents and their provenance. Update implementation evidence rather than rewriting historical planning claims as if they were new results.

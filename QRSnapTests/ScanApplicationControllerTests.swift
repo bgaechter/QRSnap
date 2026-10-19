@@ -84,14 +84,24 @@ import os
         await h.capture.wait(token)
         XCTAssertEqual(h.capture.calls, [token])
         XCTAssertTrue(h.ui.closed.isEmpty)
+        XCTAssertTrue(h.ui.processing.isEmpty)
+        h.ui.onProcessing = { visible in
+            if visible { XCTAssertEqual(h.ui.visibleOverlay, token) }
+            else { XCTAssertNotNil(h.controller.resultWindowController.window) }
+        }
         h.capture.complete(token)
         await h.decoder.wait(1)
         XCTAssertEqual(h.ui.closed, [token])
+        XCTAssertEqual(h.ui.processing, [true])
+        XCTAssertEqual(h.ui.operations, ["selection-show", "processing-show", "selection-close"])
         XCTAssertTrue(h.ui.stopped.isEmpty)
         await h.decoder.complete(1, items: [item(1, "https://example.com/one"), item(2, "https://example.com/two")])
         _ = await h.events.wait { if case .choose = $0 { return true }; return false }
         XCTAssertNotNil(h.controller.resultWindowController.window)
         XCTAssertEqual(h.ui.closed, [token])
+        XCTAssertEqual(h.ui.processing, [true, false])
+        XCTAssertEqual(h.ui.operations.last, "processing-hide")
+        h.ui.onProcessing = nil
         h.controller.cancel()
         await h.assertFinish(token, .cancelled)
         await h.clock.drain()
@@ -206,6 +216,7 @@ import os
         XCTAssertEqual(h.controller.sessionID, fresh)
         XCTAssertEqual(h.ui.visibleOverlay, fresh)
         XCTAssertEqual(h.ui.closed, [old])
+        XCTAssertTrue(h.ui.processing.isEmpty)
         let decodeCalls = await h.decoder.calls
         XCTAssertEqual(decodeCalls, 0)
         XCTAssertTrue(h.launches.urls.isEmpty)
@@ -242,6 +253,7 @@ import os
         await h.clock.fire(.milliseconds(300))
         _ = await h.events.wait { if case .progress(_, true) = $0 { return true }; return false }
         XCTAssertEqual(h.ui.progress.last, true)
+        XCTAssertTrue(h.ui.processing.isEmpty)
         await h.clock.fire(.seconds(5))
         await h.assertFinish(old, .failed(.timedOut, retainedText: nil, documentURL: nil))
         XCTAssertEqual(h.ui.progress.last, false)
@@ -252,6 +264,7 @@ import os
         XCTAssertEqual(h.controller.sessionID, fresh)
         XCTAssertEqual(h.ui.visibleOverlay, fresh)
         XCTAssertTrue(h.launches.urls.isEmpty)
+        XCTAssertTrue(h.ui.processing.isEmpty)
         h.controller.shutdown()
         XCTAssertNil(h.controller.sessionID)
         XCTAssertEqual(h.ui.stopped.count, 2)
@@ -312,6 +325,58 @@ import os
         h.controller.cancel()
     }
 
+    func testProcessingPresentationCanCancelAndRestartBeforeSelectionCloses() async throws {
+        let h = ApplicationHarness()
+        let old = try h.start()
+        h.ui.selections[0].complete(.success(h.region(old)))
+        await h.capture.wait(old)
+        h.ui.onProcessing = { visible in
+            guard visible else { return }
+            XCTAssertEqual(h.ui.visibleOverlay, old)
+            h.controller.cancel()
+            XCTAssertTrue(h.controller.startScan())
+        }
+        h.capture.complete(old)
+        await h.capture.waitReturned(old)
+        await h.assertFinish(old, .cancelled)
+        let fresh = try XCTUnwrap(h.controller.sessionID)
+        XCTAssertNotEqual(old, fresh)
+        XCTAssertEqual(h.ui.visibleOverlay, fresh)
+        XCTAssertEqual(h.ui.processing, [true, false])
+        XCTAssertEqual(h.ui.closed, [old])
+        XCTAssertEqual(h.ui.stopped, [0])
+        let decodeCalls = await h.decoder.calls
+        XCTAssertEqual(decodeCalls, 0)
+        XCTAssertTrue(h.launches.urls.isEmpty)
+        h.ui.onProcessing = nil
+        h.controller.cancel()
+        await h.clock.drain()
+    }
+
+    func testProcessingDismissalCanCancelReviewAndStartNewSession() async throws {
+        let h = ApplicationHarness()
+        var old: UUID?
+        h.ui.onProcessing = { visible in
+            guard !visible, let token = h.controller.sessionID else { return }
+            XCTAssertNotNil(h.controller.resultWindowController.window)
+            old = token
+            h.controller.cancel()
+            XCTAssertTrue(h.controller.startScan())
+        }
+        let completed = try await h.decode([item(1, "https://example.com/one"), item(2, "https://example.com/two")])
+        await h.assertFinish(completed, .cancelled)
+        XCTAssertEqual(old, completed)
+        let fresh = try XCTUnwrap(h.controller.sessionID)
+        XCTAssertNotEqual(fresh, completed)
+        XCTAssertEqual(h.ui.visibleOverlay, fresh)
+        XCTAssertEqual(h.ui.processing, [true, false])
+        XCTAssertNil(h.controller.resultWindowController.window)
+        XCTAssertTrue(h.launches.urls.isEmpty)
+        h.ui.onProcessing = nil
+        h.controller.cancel()
+        await h.clock.drain()
+    }
+
     private func item(_ id: Int, _ payload: String?) -> DecodedItem { .init(id: id, payload: payload, bounds: .zero) }
 }
 
@@ -334,7 +399,12 @@ import os
             sleep: { [clock] in try await clock.sleep($0) },
             showPermissionExplanation: { [ui] in ui.explanations += 1; ui.onExplanation?() },
             beforeSelection: { [ui] in ui.beforeSelections += 1 },
-            onProgress: { [ui] in ui.progress.append($0) }, onEvent: { [events] in events.receive($0) })
+            onProgress: { [ui] in ui.progress.append($0) },
+            onProcessingUI: { [ui] in
+                ui.processing.append($0)
+                ui.operations.append($0 ? "processing-show" : "processing-hide")
+                ui.onProcessing?($0)
+            }, onEvent: { [events] in events.receive($0) })
     }
 
     func start() throws -> UUID {
@@ -395,9 +465,12 @@ import os
     var explanations = 0
     var beforeSelections = 0
     var progress: [Bool] = []
+    var processing: [Bool] = []
+    var operations: [String] = []
     var copied: [String] = []
     var onClose: (() -> Void)?
     var onExplanation: (() -> Void)?
+    var onProcessing: ((Bool) -> Void)?
     func escape(hasModalWindow: Bool, hasSheet: Bool) {
         if ScanApplicationController.SessionEvents.handlesEscape(hasModalWindow: hasModalWindow, hasSheet: hasSheet) {
             observers.last?.cancel()
@@ -405,9 +478,11 @@ import os
     }
     var selection: ScanApplicationController.SelectionUI {
         .init(show: { token, completion, cancel, changed in
+            self.operations.append("selection-show")
             self.visibleOverlay = token
             self.selections.append(.init(token: token, complete: completion, cancel: cancel, changed: changed))
         }, close: {
+            self.operations.append("selection-close")
             if let token = self.visibleOverlay { self.closed.append(token) }
             self.visibleOverlay = nil
             self.onClose?()

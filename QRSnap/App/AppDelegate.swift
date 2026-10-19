@@ -35,8 +35,9 @@ import AppKit
             self?.settingsWindow.close()
         },
         onProgress: { [weak self] visible in
-            self?.showProgress(visible)
+            self?.statusItem.button?.title = visible ? "Reading…" : ""
         },
+        onProcessingUI: { [weak self] visible in self?.showProcessingUI(visible) },
         onEvent: { [weak self] event in self?.receive(event) }
     )
 
@@ -188,8 +189,7 @@ import AppKit
         shortcutLabel?.stringValue = shortcutSettings.status.message
     }
 
-    private func showProgress(_ visible: Bool) {
-        statusItem.button?.title = visible ? "Reading…" : ""
+    private func showProcessingUI(_ visible: Bool) {
         if !visible {
             progressPanel?.onCancel = nil
             progressPanel?.close()
@@ -202,6 +202,7 @@ import AppKit
         panel.title = "QRSnap"
         panel.isReleasedWhenClosed = false
         panel.level = .floating
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hidesOnDeactivate = false
         panel.onCancel = { [weak self] in
             guard let self, self.scanner.sessionID == token else { return }
@@ -224,8 +225,8 @@ import AppKit
         panel.contentView = content
         panel.center()
         progressPanel = panel
-        // Give slow decoding a local Cancel/Escape target after selection panels close.
-        // This avoids global keyboard monitoring or an additional privacy permission.
+        // Take key focus before selection panels close, then retain cancellation
+        // through decoding and handoff. Delayed progress is a separate status label.
         panel.makeKeyAndOrderFront(nil)
     }
 

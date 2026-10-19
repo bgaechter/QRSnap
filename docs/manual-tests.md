@@ -1,4 +1,23 @@
-# G0 manual verification record
+# Manual verification
+
+## Current integrated MVP smoke test
+
+The following checks are **NOT RUN** for the combined candidate in this Linux workspace. Automated CI exercises synthetic fixtures and injected OS boundaries; it does not replace these live checks. Record the exact commit, app identity, OS/architecture, display configuration and actual receiving application. Use a stable authorized binary and synthetic content displayed in another application; QRSnap excludes its own windows from capture.
+
+| Check | Current procedure and expected result |
+| --- | --- |
+| Permission and HTTPS | Launch without a capture or permission prompt. Choose **Scan QR code…**, explicitly continue to screen permission if needed, then scan `QRSnapTests/Fixtures/https.png`. The default browser receives the harmless example URL once. |
+| Text and retention | Scan `unicode.png` and `multiline.png`. Inspect the actual default text app and original UTF-8 bytes. Use **Show scanned text files…**; documents survive app/editor restart. Do not change associations. |
+| Choice and confirmation | Scan `multiple.png` and choose one observation. Scan `mailto.png` with an existing handler; verify the destination/handler, Cancel without handoff, and explicitly confirm in a separate run. If no handler exists, verify text fallback instead. |
+| Recovery and cancellation | Scan `no-code.png`, then Retry with a valid code. Check Escape during selection and processing, repeated invocation, and a fresh scan after cancellation. No stale destination opens. Record any timing-sensitive case that cannot be exercised as NOT RUN. |
+| Copy and Save | On the `mailto.png` confirmation, use Copy/Save explicitly and compare the original text. Escape in a Save sheet cancels the sheet while retaining the result. Check cancelled/stale saves do not create a file; do not force unrelated app failures. |
+| Shortcut settings | Open **Settings…**, enable the shortcut, optionally record a replacement, and choose **Apply**. Invoke while another app is foreground; quit/relaunch and confirm persistence. Disable and Apply; verify menu scanning still works. Under a controlled registration conflict, expect unavailable status without losing the saved preference. |
+
+See [the MVP record](mvp.md) for automated results and remaining release gates.
+
+## Historical G0 component record
+
+The rows below preserve earlier named-host evidence. References to synthetic text tests, preview/proof controls and nonpersistent shortcut toggles describe the earlier feasibility build, not the current menus or combined-candidate acceptance.
 
 **G0 is incomplete; the screen permission blocker is repaired.** See the [runtime follow-up](screen-permission-runtime.md) for exact artifact, environment, measured bounds, user-observed checks and limitations. The earlier [blocked run](runtime-verification.md) is preserved as history. Use only synthetic content and an authorized controlled GUI environment.
 
@@ -19,4 +38,4 @@ Record per run: date, source hash/commit, app signature/identity, entitlements, 
 | T8 accessibility | Navigate menus/proof UI by keyboard and VoiceOver. | Labels/status readable; record selection limitation and required production work. | NOT RUN |
 | U7 supported OS/architecture | Repeat on macOS 14 and intended release OS/CPU with controlled signing identity. | Named compatibility evidence; compile target alone is insufficient. | NOT RUN |
 
-Independent [scan-to-open core composition](scan-workflow.md) extends late-completion tests through the coordinator and dispatcher with fake OS boundaries. It adds no GUI/runtime pass. After the affected G0 gates pass, promote the proven adapters into A2/A3, implement configurable shortcut/settings and the full A4 GUI workflow, then execute A5's timing/privacy/accessibility matrix. Release signing/notarization is A6 and requires separate release authorization.
+Independent [scan-to-open core composition](scan-workflow.md) extends late-completion tests through the coordinator and dispatcher with fake OS boundaries. The [integrated MVP](mvp.md) now connects these adapters to the normal workflow and configurable settings. Neither automated suite adds a live GUI/runtime pass. Execute the current smoke test above and A5's remaining timing/privacy/accessibility matrix before declaring those gates accepted. Release signing/notarization is A6 and requires separate release authorization.
