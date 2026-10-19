@@ -27,6 +27,17 @@ The frame-lifetime cases check actual Core Graphics data-provider release before
 
 The implementation was developed independently, then stacked on [PR #12](https://github.com/bgaechter/QRSnap/pull/12), branch feature/mvp-accessibility, to validate the combined MVP. Review the keyboard/accessibility PR first; this follow-up's PR targets that branch and contains only the decoder fix, its tests, generated project integration and evidence.
 
-Independent source review found no unresolved blocker after tightening failed-test cleanup and the claimed-worker cancellation wording. Local whitespace and generated-project consistency checks passed. Development is on Linux; macOS execution belongs to the follow-up PR's validation run, whose results will be recorded after completion.
+Independent source review found no unresolved blocker after tightening failed-test cleanup and the claimed-worker cancellation wording. Local whitespace and generated-project consistency checks passed. Development is on Linux; native evidence comes from [PR #13](https://github.com/bgaechter/QRSnap/pull/13).
+
+[macOS validation run 39303781479](https://github.com/bgaechter/QRSnap/actions/runs/39303781479), job `118235449723`, passed on **macOS 15.7.9 (24G830), arm64, Xcode 16.4 (16F6), Swift 6.1.2**. Source head: `7b3cd6e507a53e336c765ccf6c5674b213760e7e`; tested PR merge: `c7b718bf1ccc0ff9c05b080db70082f9799dfe6e` against dependency head `ba2c845127821607fa47595de1ddb2851b9c1c3a`.
+
+- **66 standalone methods** passed with zero assertion failures, including all eight cancellation methods and the existing real Vision fixture methods.
+- **120 hosted XCTest methods** passed with zero failures. All eight cancellation methods also ran in the native app test host, alongside the keyboard/accessibility and existing integration suites. These totals overlap; they are not separate unique test counts.
+- Generated-project consistency, the sandboxed app build, exact entitlements, Hardened Runtime, the Release archive and ad-hoc signature verification passed.
+- The verified reviewer app and validation logs/`.xcresult` were uploaded. The [machine-readable evidence](evidence/decoder-cancellation-ci.json) records artifact IDs, digests and seven-day expiry. The archive is ad-hoc signed; Developer ID distribution is a separate gate.
+
+The initial [run 39302966084](https://github.com/bgaechter/QRSnap/actions/runs/39302966084) compiled the standalone executable but ended with SIGTRAP before buffered test names were visible. The synthetic Core Graphics provider's release callback was moved from an actor-isolated helper to an explicitly nonisolated function, and standalone diagnostics now write immediately. Inherited callback isolation was the leading source-based diagnosis; the first run had no stack trace. The full native rerun above passed after this fixture correction.
+
+This evidence record is added in a later documentation commit without changing application or test sources. CI runs on arm64; compilation of both Release architectures does not establish native Intel runtime behavior.
 
 The signed live screen-scan/default-application smoke test, native Vision cancellation latency, repeated real-scan memory profiling, and the wider OS/display/accessibility matrix remain **NOT RUN** in this workspace. Developer ID signing, notarization and release installation checks remain separate gates. [Manual verification](manual-tests.md).

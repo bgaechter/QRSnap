@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-19",
+  "pull_request": "https://github.com/bgaechter/QRSnap/pull/13",
+  "dependency": "https://github.com/bgaechter/QRSnap/pull/12",
+  "run_url": "https://github.com/bgaechter/QRSnap/actions/runs/39303781479",
+  "run_id": 39303781479,
+  "job_id": 118235449723,
+  "source_head": "7b3cd6e507a53e336c765ccf6c5674b213760e7e",
+  "source_tree": "f89d0eb33392aa96869ee2696e0edbea946c4e58",
+  "tested_merge": "c7b718bf1ccc0ff9c05b080db70082f9799dfe6e",
+  "base": "ba2c845127821607fa47595de1ddb2851b9c1c3a",
+  "environment": {
+    "os": "macOS 15.7.9",
+    "build": "24G830",
+    "architecture": "arm64",
+    "xcode": "16.4 (16F6)",
+    "swift": "6.1.2"
+  },
+  "standalone": {
+    "tests": 66,
+    "failures": 0
+  },
+  "hosted_xctest": {
+    "tests": 120,
+    "failures": 0
+  },
+  "decoder_cancellation": {
+    "test_methods": 8,
+    "standalone": "PASS",
+    "hosted_xctest": "PASS",
+    "scope": "Synthetic pixels, controlled scheduling and injected request behavior; actual CGDataProvider release is observed."
+  },
+  "checks": {
+    "generated_project": "PASS",
+    "sandboxed_app": "PASS",
+    "exact_entitlements": "PASS",
+    "hardened_runtime": "PASS",
+    "release_archive": "PASS",
+    "ad_hoc_signature": "PASS",
+    "artifact_uploads": "PASS"
+  },
+  "artifacts": [
+    {
+      "name": "macos-validation-1",
+      "id": 12211679512,
+      "digest": "sha256:14c43d2b2bc6a8a5754b16765fd2831aca7f1c4143829722e21fe4bb228e3fdf",
+      "expires_at": "2026-10-26T18:38:20Z"
+    },
+    {
+      "name": "QRSnap-adhoc-pr-c7b718bf1ccc0ff9c05b080db70082f9799dfe6e-1",
+      "id": 12210524708,
+      "digest": "sha256:fdbc3decc5d505f3fb6389d98016e7b8382ad530bce45a5856ab763c0e8b9c72",
+      "expires_at": "2026-10-26T18:38:19Z"
+    }
+  ],
+  "preceding_failure": {
+    "run_url": "https://github.com/bgaechter/QRSnap/actions/runs/39302966084",
+    "source_head": "48b6c01289f8b58a613ab43243dda2aab63d5250",
+    "result": "Standalone executable compiled, then exited with SIGTRAP (133). Hosted tests and archive did not run.",
+    "correction": "Make the synthetic Core Graphics provider release callback explicitly nonisolated; preserve standalone test names and assertions without stdio buffering.",
+    "diagnosis_limit": "Inherited callback isolation was the leading source-based diagnosis; the initial run recorded no stack trace."
+  },
+  "runtime_not_run": [
+    "Signed live scan to default application of this candidate",
+    "Native Vision cancellation latency and real-scan peak memory or leak profiling",
+    "Audible VoiceOver, visible focus rings and native Save-sheet key ordering",
+    "macOS 14 runtime, native Intel execution and wider OS/display/keyboard-layout matrix",
+    "Developer ID signing, notarization and clean installation"
+  ]
+}
