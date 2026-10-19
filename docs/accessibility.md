@@ -19,7 +19,15 @@ The implementation uses Apple's documented [accessibility announcement notificat
 
 Hosted tests exercise native hidden controls and injected clipboard, save, registration and announcement boundaries. They cover focus traversal, Space activation, repeated-key suppression, bounded chooser labels, text selection, original-text Copy, close/cancel idempotency, stale/reentrant announcement callbacks, recording Escape priority, invalid input, registration restoration and conflict feedback.
 
-Local development is on Linux. Native compilation, hosted test execution and archive/signature validation belong to this follow-up's macOS PR validation run; results will be recorded once that run completes. Local source/project consistency checks are separate from runtime acceptance.
+Local development is on Linux. [PR #12 validation run 39301164019](https://github.com/bgaechter/QRSnap/actions/runs/39301164019) passed on macOS 15.7.9 (24G830), arm64, Xcode 16.4 (16F6):
+
+- **58 standalone tests** and **112 hosted XCTest tests**, zero failures. The hosted total includes six additional result/announcement tests and eight Settings accessibility tests.
+- Deterministic project generation, sandboxed app build, exact-entitlement and signature audits, and the Xcode Release archive all passed.
+- The verified ad-hoc reviewer app and validation logs/results were uploaded.
+
+Source head: `a5868bf2863811b3b895027f58bcbcee993ac80f`; tested PR merge: `590e9d799a06b3b5bd3d8b62dee69e24e0479e7c`, against main `3e9b0d812c07b3c43c4017a62e437c4bc8ff6647`. This record was added afterward without changing application or test sources. [Machine-readable evidence](evidence/accessibility-ci.json).
+
+Independent source review found no unresolved blocker after making chooser initial focus payload-free and removing the key-loop dependency on the optional keyboard-navigation preference. Local source/project consistency checks also passed. These results are separate from live assistive-technology and screen-capture acceptance.
 
 ## Live checks still required
 

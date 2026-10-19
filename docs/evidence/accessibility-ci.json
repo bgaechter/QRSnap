@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-19",
+  "pull_request": "https://github.com/bgaechter/QRSnap/pull/12",
+  "run_url": "https://github.com/bgaechter/QRSnap/actions/runs/39301164019",
+  "run_id": 39301164019,
+  "job_id": 118226416971,
+  "source_head": "a5868bf2863811b3b895027f58bcbcee993ac80f",
+  "tested_merge": "590e9d799a06b3b5bd3d8b62dee69e24e0479e7c",
+  "base": "3e9b0d812c07b3c43c4017a62e437c4bc8ff6647",
+  "environment": {
+    "os": "macOS 15.7.9",
+    "build": "24G830",
+    "architecture": "arm64",
+    "xcode": "16.4 (16F6)"
+  },
+  "standalone": {
+    "tests": 58,
+    "failures": 0
+  },
+  "hosted_xctest": {
+    "tests": 112,
+    "failures": 0
+  },
+  "checks": {
+    "generated_project": "PASS",
+    "sandboxed_app": "PASS",
+    "exact_entitlements": "PASS",
+    "hardened_runtime": "PASS",
+    "release_archive": "PASS",
+    "artifact_uploads": "PASS"
+  },
+  "artifacts": [
+    {
+      "name": "macos-validation-1",
+      "id": 12212307955,
+      "digest": "sha256:120303eac59a095756fa66dfe033cb982754bc01e2a18662c2a415c82a63a92d",
+      "expires_at": "2026-10-26T18:20:12Z"
+    },
+    {
+      "name": "QRSnap-adhoc-pr-590e9d799a06b3b5bd3d8b62dee69e24e0479e7c-1",
+      "id": 12211563362,
+      "digest": "sha256:01be9fa598789ce6f455a12247542f147a98b6da86c48a3d421a45e2a48e617c",
+      "expires_at": "2026-10-26T18:20:10Z"
+    }
+  ],
+  "runtime_not_run": [
+    "Signed live scan to default application of this candidate",
+    "Audible VoiceOver and braille output",
+    "Visible focus rings and native Save-sheet key ordering",
+    "Wider macOS/display/keyboard-layout matrix",
+    "Developer ID signing and notarization"
+  ]
+}
