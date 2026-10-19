@@ -1,64 +1,85 @@
 # QRSnap
 
-Native macOS menu-bar QR reader, targeting macOS 14 and later. **Current milestone: A0 feasibility proof plus independent core implementation, including scan-to-open composition. G0 remains open.**
+A native macOS menu-bar app that reads a QR code from a selected area of your screen and opens its contents in the appropriate default application. Requires **macOS 14 or later**.
 
-Start with the [planning package](00-READ-ME.md), [implementation plan](03-ai-agent-implementation-plan.md), and [current evidence](docs/claims.md). The five source documents were converted to linked Markdown without dropping requirements. Exact originals are retained in [docs/originals](docs/originals); hashes and the conversion check are in [docs/evidence](docs/evidence).
+The MVP connects screen permission, drag selection, capture, Vision decoding, result windows and application handoff. It includes persistent, configurable keyboard shortcuts and recovery actions. The build uses Apple frameworks only, with App Sandbox and Hardened Runtime enabled.
 
-## Build and test
+## Build and run
 
-Apple Swift 6 and the macOS SDK are required. The commands below use only Apple frameworks and do not download packages.
+Use a Mac with Apple Swift 6 and the macOS SDK:
 
 ```sh
 ./scripts/build-app.sh
-./scripts/test.sh
+open build/QRSnap.app
 ```
 
-The build produces `build/QRSnap.app` for the host architecture with App Sandbox, Hardened Runtime, and a **local ad-hoc signature**. It does not launch the app, request permission, or provide Developer ID/notarization. `SIGNING_IDENTITY` can select an existing identity for a deliberate signed test. `ARCH=x86_64` selects an Intel build; Intel execution has not been tested.
+The script produces an **ad-hoc signed development app** for the host architecture. It does not launch the app or request permission by itself. This is not a Developer ID-signed or notarized distribution.
 
-An ad-hoc rebuild can invalidate an existing Screen Recording grant. Preserve an authorized runtime binary by building elsewhere: `APP_OUTPUT_PATH="$PWD/build/validation/QRSnap.app" ./scripts/build-app.sh`. See the [diagnosis and recovery record](docs/screen-permission-runtime.md).
+You can also download the `QRSnap-adhoc-pr-…` artifact from a successful [GitHub Actions run](https://github.com/bgaechter/QRSnap/actions), then extract its inner `QRSnap-adhoc-pr.zip`. Review the source and validation result for that build. macOS may restrict opening a downloaded ad-hoc app; building locally or using an authorized stable signing identity is preferable for ongoing use.
 
-`test.sh` compiles the same test methods as the XCTest target into a standalone runner, so Command Line Tools can execute them without XCTest. `./scripts/test.sh --core-only` runs 55 routing, geometry, marker, session, coordinator, dispatch, workflow and storage tests. The full suite runs 58 methods, including Vision against 20 synthetic fixture images and real empty/binary observations. macOS graphics-service access is required: an agent's command sandbox can block Core Image/Vision even though the installed frameworks compile. Run the fixture tests from a normal local terminal or authorize the narrowly scoped test command. This does not require screen-recording permission and does not change the app's entitlements.
-
-With a full Xcode installation selected, use `QRSnap.xcodeproj` and its shared `QRSnap` scheme, or:
+With full Xcode, open `QRSnap.xcodeproj` and select the shared **QRSnap** scheme. `SIGNING_IDENTITY` can select an existing identity for a deliberate signed build. An ad-hoc rebuild changes the app's identity and can invalidate an existing Screen Recording grant. Keep the authorized test app intact when making another build:
 
 ```sh
-xcodebuild -project QRSnap.xcodeproj -scheme QRSnap -configuration Debug build
-xcodebuild -project QRSnap.xcodeproj -scheme QRSnap -destination 'platform=macOS' test
+APP_OUTPUT_PATH="$PWD/build/validation/QRSnap.app" ./scripts/build-app.sh
 ```
 
-These Xcode commands have **not been executed** on the current Command Line Tools installation. The project has one app target and one hosted test target. `Package.swift` offers optional `swift test` validation where XCTest is installed; it builds the shared sources as a test module, not as an extra framework in the app.
+See the [screen-access diagnosis](docs/screen-permission-runtime.md) if System Settings shows a grant but capture still fails. Do not disable the sandbox or reset system privacy settings to make a build work.
 
-## Try the feasibility proof
+## Use QRSnap
 
-Open `build/QRSnap.app` when ready to run the [manual checks](docs/manual-tests.md). It adds a QR icon to the menu bar and opens a small controls window with Scan and text-test actions. Reopen it with **Show test controls…**; launching the app alone requests no access or capture.
+1. Open the app and choose **Scan QR code…** in its window or QR menu-bar menu.
+2. If needed, read the explanation and explicitly continue to macOS screen permission. Review **System Settings → Privacy & Security → Screen & System Audio Recording**. You may need to quit/reopen the exact app you authorized, then choose Scan again.
+3. Drag around the entire QR code, including its border, in another application's window. Selection stays on one display. Press **Escape** or use **Cancel current scan** to cancel.
+4. QRSnap routes the result according to the table below. A scan that fails presents a recovery window with Retry/Cancel and, when text is available, Copy/Save.
 
-1. Put a synthetic fixture from `QRSnapTests/Fixtures` in Preview or another application. QRSnap excludes its own windows from capture.
-2. Choose **Scan QR code…**. The app explains screen access before offering to request it. Granting, denying, revoking, and relaunching need separate manual verification.
-3. Drag within one display, including the code's border. Escape or a click without a rectangle cancels. A preview shows the captured pixels, dimensions, display ID, and decoded observations. Inspect the image for crop accuracy and overlay contamination; close it to release the image.
-4. **Enable test shortcut (⌃⇧Q)** explicitly registers Control-Shift-Q for this process. Toggle it off or quit to unregister. Background invocation and controlled exclusive-conflict handling passed on the recorded host; alternate keyboard layouts remain untested.
-5. **Open synthetic text in default app…** creates a disclosed, retained UTF-8 test file and asks the default `.txt` handler to open it. Verify the bytes and editor display separately; a handoff callback only reports OS acceptance.
+| QR content | Behavior |
+| --- | --- |
+| One valid HTTP/HTTPS URL | Opens once in the default browser. |
+| Plain text, empty text, unknown URI, Wi-Fi/vCard text, or a bare `www` address | Writes the original UTF-8 text to a retained document and opens the default `.txt` application. It does not join Wi-Fi networks or import contacts. |
+| Registered app URI, such as `mailto:` | Shows the destination and handler for confirmation; Open as text is also available. A changed handler requires a new confirmation. |
+| `file:`, `javascript:`, or `data:` | Offers explicit text actions; never launches that destination directly. |
+| Multiple QR observations | Lists each separately, including duplicates and unsupported observations; opens only the one you choose. |
+| No code, unsupported payload, or oversized text | Explains the problem and offers recovery. |
 
-The proof displays scan results. The independent [scan-to-open core](docs/scan-workflow.md) connects the coordinator and dispatcher, including automatic URL/text policy, observation choice, URI confirmation and retained failures. **Preview result workflow…** exercises the reusable chooser, confirmation and recovery windows with synthetic results. Open actions in that preview intentionally simulate failures; they never open another app. Copy and Save are real actions only when you press their buttons. See [result-window evidence and limits](docs/result-windows.md).
+**Settings…** lets you enable or disable the global shortcut and record a replacement. The default is **Control-Shift-Q**, initially disabled until you enable it. Preferences persist across launches. If registration conflicts, the settings window explains the failure and the Scan menu remains available. Shortcuts bind to physical keys; their displayed names use US key positions and may differ on other layouts. There is no launch-at-login helper or global keyboard monitoring.
 
-Production settings and composition of these windows into actual screen scans remain pending; the feasibility scan UI does not launch decoded content yet. The result-window tests require hosted AppKit/XCTest and are additional to the 58-method standalone suite.
+Opening the app does not start a scan, request screen permission or open decoded content. Only your explicit scan starts capture. An enabled, previously saved shortcut is restored at launch.
 
-## Retention and limits
+## Privacy and retained text
 
-Captured pixels stay in memory, including the proof preview until it closes. Screenshot files are not written. Automatic text handoffs retain documents under Application Support / `local.benny.QRSnap` / `Scanned Text` (inside the app container when sandboxed). **Files remain until the user removes them.** The menu exposes their folder. Their names are random UUIDs; UTF-8 content is preserved. Explicit Save actions export the original UTF-8 text to a user-chosen file; Copy places the original text on the clipboard. Other applications have their own retention policies.
+- Captured pixels stay in memory and are released after processing; screenshots are not saved. QRSnap excludes its own windows from capture, so display QR content in another app.
+- No app-originated network requests, analytics, payload logs or scan history database. A browser or other receiving application may make network requests and retain its own history.
+- Text documents opened by QRSnap remain under its sandboxed Application Support directory, `local.benny.QRSnap/Scanned Text`, **until you remove them**. Use **Show scanned text files…** to find them. Filenames are random UUIDs and UTF-8 content is preserved.
+- Copy changes the clipboard only when selected. Save exports the original text to a user-chosen file using the narrow user-selected file entitlement. Cancelled or superseded Save callbacks do not write a file.
+- Cancellation invalidates work and stale controls before a new scan. It cannot retract an external application handoff already submitted to macOS.
 
-App Sandbox stays enabled. Save uses only the additional user-selected file read/write capability; there is no broad filesystem, network, Apple Events, camera or microphone entitlement.
+## Validation and current limits
 
-This build makes no app-originated network requests and contains no analytics or payload logging. The initial selection limit is 16 million output pixels, subject to G0 memory measurements. A gesture cannot span displays. Drag selection is not fully accessible to nonvisual users. The [runtime follow-up](docs/screen-permission-runtime.md) resolves the stale screen grant and records sandboxed capture, exact 2× marker mapping, overlay exclusion, scene freshness, shortcut/conflict checks, user-observed full-screen invocation, revocation recovery and TextEdit handoff. macOS 14/Intel, external displays, arbitrary Space transitions, Stage Manager, the remaining permission/layout matrix, other default apps and release signing remain unverified.
+[CI](docs/ci.md) checks deterministic project generation, the standalone core/Vision suite, app signature and exact entitlements, hosted XCTest, and the Xcode Release archive. Its `PR validation` check produces logs, `.xcresult` results and an ad-hoc reviewer app. The standalone suite and hosted suite have different counts because AppKit integration/settings/window tests run only under hosted XCTest.
 
-## Project layout
+```sh
+./scripts/test.sh --core-only
+./scripts/test.sh
+# Full Xcode required:
+bash scripts/ci-check.sh
+```
 
-- `QRSnap/`: AppKit feasibility UI, capture adapter, shared models, pure classification/geometry, serial Vision decoder, and text storage.
-- `QRSnapTests/`: common XCTest/standalone assertions and synthetic fixtures.
-- `scripts/`: local build, standalone tests, deterministic project generation, and fixture generation.
-- `docs/`: implementation decisions, contracts, evidence and manual checks.
+Vision fixture tests need macOS graphics services; an agent command sandbox can prevent them from running. Tests use synthetic QR content and injected capture/launch boundaries; they do not request Screen Recording access or open another application. See the [MVP implementation record](docs/mvp.md) for the exact CI results and evidence boundary.
 
-Regenerate the project after adding source/test files with `python3 scripts/generate-xcode-project.py`. Regenerate fixtures from the repository root with `xcrun swift scripts/generate-fixtures.swift`; the fixture generator uses Core Image and writes only synthetic PNGs and their manifest.
+Previous named-host checks on macOS 26.5.2 / Apple silicon verified sandboxed screen capture, 2× crop mapping, overlay exclusion, screen-permission recovery, shortcut conflict handling and TextEdit handoff. The new combined MVP has automated integration coverage; a live, signed **screen scan → default application** smoke test of this exact candidate remains to be recorded. Earlier component checks do not establish that final runtime result.
+
+Other limits remain explicit: macOS 14 and native Intel execution; external/1×/portrait/negative-origin displays; the full permission, keyboard-layout, Spaces and Stage Manager matrix; alternate default editors; performance/memory profiling and complete VoiceOver coverage. Drag selection requires a pointer. Captures are limited to 16 million pixels, decoded text to 64 KiB, and capture/decode processing to five seconds. There is no arbitrary damaged/blurred QR recovery guarantee. Developer ID signing, notarization and clean-install release validation remain separate work. [Manual verification matrix](docs/manual-tests.md).
+
+## Development
+
+- `QRSnap/App`: menu, settings, production composition, result windows and OS handoff adapter.
+- `QRSnap/Scan`, `Selection`, `Capture`, `Decode`, `Routing`: session coordination, region selection, ScreenCaptureKit, Vision and payload policy.
+- `QRSnapTests`: deterministic contracts, AppKit integration tests and synthetic QR fixtures.
+- `scripts`: local builds/tests, project generation and development fixture tools.
+- `docs`: design contracts, historical evidence, current validation and remaining runtime checks.
+
+After adding sources/tests, regenerate the project with `python3 scripts/generate-xcode-project.py`. Historical planning documents and their [originals](docs/originals) are retained; start with [the planning package](00-READ-ME.md) and [current evidence](docs/claims.md).
 
 ## License
 
-QRSnap is available under the [MIT License](LICENSE).
+[MIT License](LICENSE).

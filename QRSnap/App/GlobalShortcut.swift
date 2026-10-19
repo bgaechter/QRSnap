@@ -1,12 +1,15 @@
 import AppKit
 import Carbon
 
-@MainActor final class GlobalShortcut {
+@MainActor final class GlobalShortcut: ShortcutRegistering {
     private var hotKey: EventHotKeyRef?
     private var handler: EventHandlerRef?
     var onInvoke: (() -> Void)?
 
-    func register() -> OSStatus {
+    func register() -> OSStatus { register(.defaultShortcut) }
+
+    func register(_ shortcut: KeyboardShortcut) -> OSStatus {
+        guard shortcut.validationMessage == nil else { return OSStatus(paramErr) }
         unregister()
         var type = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let installed = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
@@ -22,8 +25,8 @@ import Carbon
             }
             return noErr
         }, 1, &type, Unmanaged.passUnretained(self).toOpaque(), &handler)
-        guard installed == noErr else { return installed }
-        let status = RegisterEventHotKey(UInt32(kVK_ANSI_Q), UInt32(controlKey | shiftKey),
+        guard installed == noErr else { unregister(); return installed }
+        let status = RegisterEventHotKey(shortcut.keyCode, shortcut.modifiers,
                                          EventHotKeyID(signature: 0x5152534E, id: 1),
                                          GetApplicationEventTarget(), OptionBits(kEventHotKeyExclusive), &hotKey)
         if status != noErr { unregister() }

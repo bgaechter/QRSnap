@@ -1,5 +1,9 @@
 # Implementation handoff
 
+## Latest follow-up — integrated MVP
+
+Reviewed and merged PR #10 at `49ecb18` after its 58 standalone / 69 hosted tests and all current checks passed. This follow-up connects actual scans to the result workflow, adds persistent configurable shortcuts/settings, replaces the feasibility UI with the normal application controls, and updates the README. See [MVP implementation and exact validation](mvp.md). The task worktree is `/workspace/worktrees/working-mvp`, branch `feature/working-mvp`. Native build/test checks run on GitHub Actions; a live signed screen-to-default-app check of the combined candidate remains NOT RUN in this Linux workspace.
+
 ## Latest follow-up — result windows and explicit export
 
 [PR #9](https://github.com/bgaechter/QRSnap/pull/9) was reviewed without blocking findings and merged with its required check green as `c710a8a`. This follow-up adds reusable chooser, custom-destination confirmation and failure-recovery windows, with exact Copy/Save and stale-action guards. An explicit synthetic preview composes them with `ScanWorkflow`; actual screen scans still use the capture-proof path. The requested MIT `LICENSE` is included.

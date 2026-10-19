@@ -72,6 +72,9 @@ import Foundation
     @discardableResult public func displayDidChange(sessionID: UUID) -> Bool {
         coordinator.displayDidChange(sessionID: sessionID)
     }
+    @discardableResult public func failSelection(sessionID: UUID, failure: ScanFailure) -> Bool {
+        coordinator.failSelection(sessionID: sessionID, failure: failure)
+    }
 
     /// Locks the chosen observation before any callback or asynchronous operation.
     @discardableResult public func choose(sessionID token: UUID, observationID: Int) -> Bool {
