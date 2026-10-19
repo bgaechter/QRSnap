@@ -54,6 +54,7 @@ Use **Tab / Shift-Tab** to move between actions and **Space** to activate the fo
 - Text documents opened by QRSnap remain under its sandboxed Application Support directory, `local.benny.QRSnap/Scanned Text`, **until you remove them**. Use **Show scanned text files…** to find them. Filenames are random UUIDs and UTF-8 content is preserved.
 - Copy changes the clipboard only when selected. Save exports the original text to a user-chosen file using the narrow user-selected file entitlement. Cancelled or superseded Save callbacks do not write a file.
 - Cancellation invalidates work and stale controls before a new scan. It cannot retract an external application handoff already submitted to macOS.
+- Cancelled QR jobs release their queued images and skip obsolete decoding. Once the worker has claimed an image, native cancellation is best effort and the image can remain until that worker returns. [Cancellation behavior and tests](docs/decoder-cancellation.md).
 
 ## Validation and current limits
 
