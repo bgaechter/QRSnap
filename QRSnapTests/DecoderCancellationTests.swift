@@ -221,10 +221,8 @@ import os
         let pixels = UnsafeMutableRawPointer.allocate(byteCount: 8, alignment: 1)
         pixels.initializeMemory(as: UInt8.self, repeating: 255, count: 8)
         let owner = Unmanaged.passRetained(lifetime)
-        guard let provider = CGDataProvider(dataInfo: owner.toOpaque(), data: pixels, size: 8, releaseData: { info, data, _ in
-            UnsafeMutableRawPointer(mutating: data).deallocate()
-            if let info { Unmanaged<DecoderFrameLifetime>.fromOpaque(info).takeRetainedValue().released() }
-        }) else {
+        guard let provider = CGDataProvider(dataInfo: owner.toOpaque(), data: pixels, size: 8,
+                                            releaseData: releaseDecoderFrameData) else {
             owner.release()
             pixels.deallocate()
             throw DecoderTestError.fixtureUnavailable
@@ -301,6 +299,15 @@ import os
 }
 
 private enum DecoderTestError: Error { case workerFailed, fixtureUnavailable }
+
+/// Core Graphics releases the provider on whichever thread drops the last image
+/// reference. A closure created inside the MainActor test helper can inherit that
+/// isolation and trap when Core Graphics calls it from the decoder worker.
+private nonisolated func releaseDecoderFrameData(_ info: UnsafeMutableRawPointer?,
+                                                _ data: UnsafeRawPointer, _ size: Int) {
+    UnsafeMutableRawPointer(mutating: data).deallocate()
+    if let info { Unmanaged<DecoderFrameLifetime>.fromOpaque(info).takeRetainedValue().released() }
+}
 
 private final class DecoderFrameLifetime: Sendable {
     private let count = OSAllocatedUnfairLock(initialState: 0)

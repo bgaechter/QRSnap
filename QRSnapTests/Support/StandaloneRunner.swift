@@ -6,9 +6,14 @@ import Foundation
 @MainActor class XCTestCase {}
 @MainActor enum TestResults { static var failures = 0; static var count = 0 }
 struct TestFailure: Error {}
+// Write test names and assertions directly so a native trap cannot hide the
+// active test behind stdio buffering when CI pipes the runner into a log.
+@MainActor private func testLog(_ message: String) {
+    FileHandle.standardOutput.write(Data("\(message)\n".utf8))
+}
 @MainActor func XCTFail(_ message: String = "Failure", file: StaticString = #filePath, line: UInt = #line) {
     TestResults.failures += 1
-    print("FAIL \(file):\(line) \(message)")
+    testLog("FAIL \(file):\(line) \(message)")
 }
 @MainActor private func expect(_ condition: () throws -> Bool, _ message: String, file: StaticString, line: UInt) {
     do { if try !condition() { XCTFail(message, file: file, line: line) } }
@@ -44,8 +49,9 @@ struct TestFailure: Error {}
     @MainActor static func run(_ name: String, _ body: () async throws -> Void) async {
         let before = TestResults.failures
         TestResults.count += 1
+        testLog("RUN \(name)")
         do { try await body() } catch { XCTFail("\(name) threw \(error)") }
-        print("\(before == TestResults.failures ? "PASS" : "FAIL") \(name)")
+        testLog("\(before == TestResults.failures ? "PASS" : "FAIL") \(name)")
     }
     @MainActor static func main() async {
         let routing = RoutingTests(), geometry = GeometryTests(), session = SessionTests(), storage = TextDocumentStoreTests()
@@ -123,7 +129,7 @@ struct TestFailure: Error {}
             await run("vision.empty-unsupported", decoder.testEmptyAndUnsupportedObservationsRemainDistinct)
             await run("vision.characterization", decoder.testCharacterizationRecordsObservedCounts)
         }
-        print("\(TestResults.count) tests, \(TestResults.failures) assertion failures")
+        testLog("\(TestResults.count) tests, \(TestResults.failures) assertion failures")
         exit(TestResults.failures == 0 ? 0 : 1)
     }
 }
