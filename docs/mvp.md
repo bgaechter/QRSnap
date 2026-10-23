@@ -26,6 +26,10 @@ Independent source review found no remaining blocking issue after fixing continu
 
 Tests inject permission, selection, capture and application-launch side effects. They exercise the production composition and native controls without requesting screen access, changing system defaults, registering global hotkeys or opening other apps. Existing Vision tests continue to use committed synthetic images.
 
+## Follow-up implementation
+
+[PR #12](https://github.com/bgaechter/QRSnap/pull/12) adds explicit keyboard navigation and accessibility announcements. [PR #13](https://github.com/bgaechter/QRSnap/pull/13) is stacked on it and adds cancellation-aware decoding with queued-image release. The combined candidate passed 66 standalone methods and 120 hosted XCTest methods, plus app and Release archive verification. See the [accessibility record](accessibility.md) and [decoder cancellation record](decoder-cancellation.md) for exact tested commits, run links, artifact metadata and evidence limits. Merge #12 before retargeting #13 to main. The earlier implementation results above remain scoped to their recorded commit.
+
 ## Runtime boundary
 
 The prior [screen-permission runtime record](screen-permission-runtime.md) and [result-window runtime record](result-windows.md) establish named-host component behavior only. A live signed scan-to-default-app smoke test of this combined candidate is **NOT RUN** in this Linux environment. G0/G4/G6 are not declared accepted by compiling or passing mocked tests.
