@@ -2,9 +2,34 @@ import AppKit
 import Carbon
 
 @MainActor final class SettingsWindowController: NSObject, NSWindowDelegate {
+    /// Production recording still consumes local key events before menu equivalents.
+    /// Tests inject this OS boundary without monitoring real keyboard input.
+    struct RecordingMonitor {
+        var install: @MainActor (NSWindow, @escaping @MainActor (UInt16, NSEvent.ModifierFlags, Bool) -> Void) -> (@MainActor () -> Void)?
+
+        static var native: RecordingMonitor {
+            RecordingMonitor { window, receive in
+                guard window.isKeyWindow else { return nil }
+                guard let monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak window] event in
+                    let keyCode = event.keyCode, flags = event.modifierFlags
+                    let windowNumber = event.windowNumber, isRepeat = event.isARepeat
+                    let consumed = MainActor.assumeIsolated {
+                        guard let window, window.isKeyWindow, windowNumber == window.windowNumber else { return false }
+                        receive(keyCode, flags, isRepeat)
+                        return true
+                    }
+                    return consumed ? nil : event
+                }) else { return nil }
+                return { NSEvent.removeMonitor(monitor) }
+            }
+        }
+    }
+
     private let settings: ShortcutSettingsController
+    private let announce: @MainActor (String) -> Void
+    private let recordingMonitor: RecordingMonitor
     private var draft: ShortcutPreferences
-    private var eventMonitor: Any?
+    private var stopKeyMonitor: (@MainActor () -> Void)?
     private var enabledButton: NSButton?
     private var shortcutLabel: NSTextField?
     private var statusLabel: NSTextField?
@@ -14,8 +39,12 @@ import Carbon
     private(set) var window: NSWindow?
     var onApply: ((ShortcutRegistrationStatus) -> Void)?
 
-    init(settings: ShortcutSettingsController) {
+    init(settings: ShortcutSettingsController,
+         announce: @escaping @MainActor (String) -> Void = AccessibilityAnnouncements.post,
+         recordingMonitor: RecordingMonitor = .native) {
         self.settings = settings
+        self.announce = announce
+        self.recordingMonitor = recordingMonitor
         draft = settings.preferences
         super.init()
     }
@@ -29,20 +58,27 @@ import Carbon
         if activate {
             NSApp.activate(ignoringOtherApps: true)
             window?.makeKeyAndOrderFront(nil)
+            if let enabledButton { window?.makeFirstResponder(enabledButton) }
         }
     }
 
     func close() {
-        stopRecording()
+        stopRecording(feedback: "Shortcut recording cancelled.", restoreFocus: false)
         window?.close()
     }
 
     private func buildWindow() {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 640),
-                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        let window = SettingsWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 640),
+                                    styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "QRSnap Settings"
         window.isReleasedWhenClosed = false
         window.delegate = self
+        window.onEscape = { [weak self] in
+            guard let self else { return }
+            if self.stopKeyMonitor != nil { self.stopRecording(feedback: "Shortcut recording cancelled.") }
+            else { self.close() }
+        }
+        window.onClose = { [weak self] in self?.close() }
         let content = NSView()
         let stack = NSStackView()
         stack.orientation = .vertical
@@ -59,14 +95,18 @@ import Carbon
         let heading = NSTextField(labelWithString: "Scan shortcut")
         heading.font = .systemFont(ofSize: 20, weight: .semibold)
         stack.addArrangedSubview(heading)
-        let enabled = NSButton(checkboxWithTitle: "Enable global shortcut", target: self, action: #selector(changeEnabled))
+        let enabled = KeyboardAccessibleButton(title: "Enable global shortcut", target: self, action: #selector(changeEnabled))
+        enabled.setButtonType(.switch)
         enabled.identifier = NSUserInterfaceItemIdentifier("settings-shortcut-enabled")
+        enabled.setAccessibilityIdentifier("settings-shortcut-enabled")
+        enabled.setAccessibilityLabel("Enable global shortcut")
         stack.addArrangedSubview(enabled)
         enabledButton = enabled
 
         let label = NSTextField(labelWithString: "")
         label.font = .monospacedSystemFont(ofSize: 19, weight: .medium)
         label.identifier = NSUserInterfaceItemIdentifier("settings-shortcut-value")
+        label.setAccessibilityIdentifier("settings-shortcut-value")
         label.setAccessibilityLabel("Selected shortcut, US key position")
         shortcutLabel = label
         let record = button("Record shortcut…", action: #selector(toggleRecording), id: "settings-record")
@@ -79,8 +119,12 @@ import Carbon
         addText("Include Control, Option or Command. Shortcut names show US keyboard positions; the same physical key is used after you change keyboard layouts. Keyboard capture runs only while recording in this window.", to: stack)
         let status = addText("", to: stack)
         status.identifier = NSUserInterfaceItemIdentifier("settings-shortcut-status")
+        status.setAccessibilityIdentifier("settings-shortcut-status")
+        status.setAccessibilityLabel("Shortcut status")
         statusLabel = status
         let apply = button("Apply", action: #selector(applySettings), id: "settings-apply")
+        apply.keyEquivalent = "\r"
+        apply.keyEquivalentModifierMask = []
         applyButton = apply
         stack.addArrangedSubview(apply)
 
@@ -91,6 +135,7 @@ import Carbon
         addText("Text opened as a document stays in QRSnap’s private Scanned Text folder until you remove it. Use Show scanned text files… from the menu to find it. Explicit Save… keeps a copy at the location you choose. Browsers and editors have their own history and retention policies.", to: stack)
         addText("QRSnap has no analytics or app-originated network requests. Drag selection requires a pointing device; it is not fully accessible to nonvisual users.", to: stack)
         window.contentView = content
+        KeyboardFocusLoop.install(in: window, views: [enabled, record, reset, apply])
         window.center()
         self.window = window
     }
@@ -105,9 +150,11 @@ import Carbon
     }
 
     private func button(_ title: String, action: Selector, id: String) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
+        let button = KeyboardAccessibleButton(title: title, target: self, action: action)
         button.bezelStyle = .rounded
         button.identifier = NSUserInterfaceItemIdentifier(id)
+        button.setAccessibilityIdentifier(id)
+        button.setAccessibilityLabel(title)
         return button
     }
 
@@ -115,8 +162,9 @@ import Carbon
         enabledButton?.state = draft.enabled ? .on : .off
         shortcutLabel?.stringValue = draft.shortcut.displayName
         statusLabel?.stringValue = settings.status.message
-        let recording = eventMonitor != nil
+        let recording = stopKeyMonitor != nil
         recordButton?.title = recording ? "Cancel recording" : "Record shortcut…"
+        if let recordButton { recordButton.setAccessibilityLabel(recordButton.title) }
         enabledButton?.isEnabled = !recording
         defaultButton?.isEnabled = !recording
         applyButton?.isEnabled = !recording
@@ -124,67 +172,96 @@ import Carbon
 
     @objc private func changeEnabled() {
         draft.enabled = enabledButton?.state == .on
-        statusLabel?.stringValue = "Apply to save your changes. " + settings.status.message
+        updateStatus("Apply to save your changes. " + settings.status.message)
     }
 
     @objc private func useDefault() {
         draft.shortcut = .defaultShortcut
         refresh()
-        statusLabel?.stringValue = "Default shortcut selected. Apply to save your changes."
+        updateStatus("Default shortcut selected. Apply to save your changes.")
     }
 
     @objc private func applySettings() {
-        stopRecording()
+        guard stopKeyMonitor == nil else { return }
         let result = settings.apply(draft)
         refresh()
-        statusLabel?.stringValue = result.message
+        updateStatus(result.message)
         onApply?(result)
     }
 
     @objc private func toggleRecording() {
-        if eventMonitor != nil { stopRecording(); return }
-        guard window?.isKeyWindow == true else { return }
+        if stopKeyMonitor != nil { stopRecording(feedback: "Shortcut recording cancelled."); return }
+        guard let window else { return }
         settings.beginRecording()
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let keyCode = event.keyCode
-            let flags = event.modifierFlags
-            let windowNumber = event.windowNumber
-            let isRepeat = event.isARepeat
-            let consumed = MainActor.assumeIsolated {
-                guard let self, let window = self.window, window.isKeyWindow,
-                      windowNumber == window.windowNumber else { return false }
-                if keyCode == 53 { self.stopRecording(); return true }
-                guard !isRepeat else { return true }
-                var modifiers: UInt32 = 0
-                for (flag, carbon) in [(NSEvent.ModifierFlags.control, controlKey), (.option, optionKey), (.command, cmdKey), (.shift, shiftKey)] {
-                    if flags.contains(flag) { modifiers |= UInt32(carbon) }
-                }
-                let shortcut = KeyboardShortcut(keyCode: UInt32(keyCode), modifiers: modifiers)
-                if let message = shortcut.validationMessage {
-                    self.statusLabel?.stringValue = message + " Escape cancels."
-                } else {
-                    self.draft.shortcut = shortcut
-                    self.stopRecording()
-                    self.statusLabel?.stringValue = "\(shortcut.displayName) selected. Apply to save your changes."
-                }
-                return true
-            }
-            return consumed ? nil : event
+        stopKeyMonitor = recordingMonitor.install(window) { [weak self] keyCode, flags, isRepeat in
+            self?.recordKey(keyCode: keyCode, flags: flags, isRepeat: isRepeat)
         }
-        if eventMonitor == nil { settings.endRecording() }
+        if stopKeyMonitor == nil { settings.endRecording() }
         refresh()
         onApply?(settings.status)
+        if stopKeyMonitor != nil { updateStatus(settings.status.message) }
+        else { updateStatus("Shortcut recording could not start. Activate Settings and try again. " + settings.status.message) }
     }
 
-    private func stopRecording() {
-        guard let eventMonitor else { return }
-        NSEvent.removeMonitor(eventMonitor)
-        self.eventMonitor = nil
+    private func recordKey(keyCode: UInt16, flags: NSEvent.ModifierFlags, isRepeat: Bool) {
+        guard stopKeyMonitor != nil else { return }
+        if keyCode == 53 { stopRecording(feedback: "Shortcut recording cancelled."); return }
+        guard !isRepeat else { return }
+        var modifiers: UInt32 = 0
+        for (flag, carbon) in [(NSEvent.ModifierFlags.control, controlKey), (.option, optionKey), (.command, cmdKey), (.shift, shiftKey)] {
+            if flags.contains(flag) { modifiers |= UInt32(carbon) }
+        }
+        let shortcut = KeyboardShortcut(keyCode: UInt32(keyCode), modifiers: modifiers)
+        if let message = shortcut.validationMessage {
+            updateStatus(message + " Escape cancels.")
+        } else {
+            draft.shortcut = shortcut
+            stopRecording()
+            var message = "\(shortcut.displayName) selected. Apply to save your changes."
+            if case .unavailable = settings.status { message += " " + settings.status.message }
+            updateStatus(message)
+        }
+    }
+
+    private func stopRecording(feedback: String? = nil, restoreFocus: Bool = true) {
+        guard let stop = stopKeyMonitor else { return }
+        stopKeyMonitor = nil
+        stop()
         settings.endRecording()
         refresh()
+        if restoreFocus, let recordButton { window?.makeFirstResponder(recordButton) }
         onApply?(settings.status)
+        if let feedback { updateStatus(feedback + " " + settings.status.message) }
     }
 
-    func windowDidResignKey(_ notification: Notification) { stopRecording() }
-    func windowWillClose(_ notification: Notification) { stopRecording() }
+    private func updateStatus(_ message: String) {
+        statusLabel?.stringValue = message
+        announce(message)
+    }
+
+    func windowDidResignKey(_ notification: Notification) {
+        stopRecording(feedback: "Shortcut recording cancelled.", restoreFocus: false)
+    }
+    func windowWillClose(_ notification: Notification) {
+        stopRecording(feedback: "Shortcut recording cancelled.", restoreFocus: false)
+    }
+}
+
+@MainActor private final class SettingsWindow: NSWindow {
+    var onEscape: (() -> Void)?
+    var onClose: (() -> Void)?
+
+    override func cancelOperation(_ sender: Any?) { onEscape?() }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if event.type == .keyDown, !event.isARepeat {
+            if event.keyCode == 53, modifiers.isEmpty { cancelOperation(nil); return true }
+            if event.charactersIgnoringModifiers?.lowercased() == "w", modifiers == .command {
+                onClose?()
+                return true
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }

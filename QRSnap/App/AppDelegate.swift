@@ -57,6 +57,7 @@ import AppKit
         add("About QRSnap…", #selector(about), to: menu)
         add("Quit QRSnap", #selector(quit), to: menu)
         statusItem.menu = menu
+        installApplicationMenu()
         shortcutSettings.onInvoke = { [weak self] in self?.scan() }
         settingsWindow.onApply = { [weak self] _ in self?.refreshShortcutLabel() }
         // XCTest loads this app as a host. It must not restore a user's hotkey or
@@ -89,12 +90,12 @@ import AppKit
         let policy = NSTextField(wrappingLabelWithString: "Web links open in your default browser. Text opens in your default text app. Other app links ask for confirmation, and multiple codes let you choose one.")
         let privacy = NSTextField(wrappingLabelWithString: "Screen images stay in memory. Text documents opened by QRSnap are kept until you remove them. Copy and Save happen only when you choose them.")
         privacy.textColor = .secondaryLabelColor
-        let scan = NSButton(title: "Scan QR code…", target: self, action: #selector(scan))
+        let scan = KeyboardAccessibleButton(title: "Scan QR code…", target: self, action: #selector(scan))
         scan.bezelStyle = .rounded
         scan.keyEquivalent = "\r"
-        let settings = NSButton(title: "Settings…", target: self, action: #selector(showSettings))
+        let settings = KeyboardAccessibleButton(title: "Settings…", target: self, action: #selector(showSettings))
         settings.bezelStyle = .rounded
-        let files = NSButton(title: "Show scanned text files…", target: self, action: #selector(showTextFiles))
+        let files = KeyboardAccessibleButton(title: "Show scanned text files…", target: self, action: #selector(showTextFiles))
         files.bezelStyle = .rounded
         let actions = NSStackView(views: [scan, settings, files])
         actions.orientation = .horizontal
@@ -122,6 +123,7 @@ import AppKit
             label.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         }
         window.contentView = content
+        KeyboardFocusLoop.install(in: window, views: [scan, settings, files])
         mainWindow = window
         refreshShortcutLabel()
         window.center()
@@ -170,6 +172,9 @@ import AppKit
     }
 
     private func receive(_ event: ScanWorkflow.Event) {
+        if let announcement = AccessibilityAnnouncements.scanMessage(for: event) {
+            AccessibilityAnnouncements.post(announcement)
+        }
         let message: String
         switch event {
         case .selecting: message = "Drag around a QR code. Escape cancels."
@@ -209,7 +214,7 @@ import AppKit
             self.scanner.cancel()
         }
         let label = NSTextField(labelWithString: "Reading the selected area…")
-        let cancel = NSButton(title: "Cancel", target: panel, action: #selector(ScanProgressPanel.cancelPressed))
+        let cancel = KeyboardAccessibleButton(title: "Cancel", target: panel, action: #selector(ScanProgressPanel.cancelPressed))
         cancel.bezelStyle = .rounded
         cancel.keyEquivalent = "\u{1b}"
         let stack = NSStackView(views: [label, cancel])
@@ -223,6 +228,7 @@ import AppKit
             stack.centerYAnchor.constraint(equalTo: content.centerYAnchor)
         ])
         panel.contentView = content
+        KeyboardFocusLoop.install(in: panel, views: [cancel])
         panel.center()
         progressPanel = panel
         // Take key focus before selection panels close, then retain cancellation
@@ -261,6 +267,25 @@ import AppKit
         let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
         item.target = self
         menu.addItem(item)
+    }
+
+    private func installApplicationMenu() {
+        let mainMenu = NSMenu()
+        let appMenu = NSMenu(title: "QRSnap")
+        let appItem = mainMenu.addItem(withTitle: "QRSnap", action: nil, keyEquivalent: "")
+        appItem.submenu = appMenu
+        add("About QRSnap…", #selector(about), to: appMenu)
+        add("Settings…", #selector(showSettings), to: appMenu)
+        appMenu.items.last?.keyEquivalent = ","
+        appMenu.addItem(.separator())
+        add("Quit QRSnap", #selector(quit), to: appMenu)
+        appMenu.items.last?.keyEquivalent = "q"
+        let fileMenu = NSMenu(title: "File")
+        let fileItem = mainMenu.addItem(withTitle: "File", action: nil, keyEquivalent: "")
+        fileItem.submenu = fileMenu
+        add("Scan QR code…", #selector(scan), to: fileMenu)
+        fileMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        NSApp.mainMenu = mainMenu
     }
 
     @objc private func quit() { NSApp.terminate(nil) }

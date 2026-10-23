@@ -256,6 +256,145 @@ import XCTest
         XCTAssertTrue(effects.actions.isEmpty)
     }
 
+    func testKeyboardChooserTraversalAndSpaceChooseOnlyTheFocusedObservation() throws {
+        let (controller, effects) = makeController()
+        defer { controller.dismiss() }
+        let session = UUID()
+        controller.receive(.selecting(session))
+        controller.receive(.choose(session, [item(1, "first"), item(2, "second"), item(3, nil)]))
+        let window = try XCTUnwrap(controller.window)
+        let first = try button("result-choose-1", in: controller)
+        let second = try button("result-choose-2", in: controller)
+        XCTAssertTrue(window.initialFirstResponder === (try button("result-cancel", in: controller)))
+        XCTAssertTrue(first.acceptsFirstResponder)
+        XCTAssertTrue(first.canBecomeKeyView)
+        XCTAssertTrue(window.makeFirstResponder(first))
+        first.keyDown(with: key(48, "\t", window: window))
+        XCTAssertTrue(window.firstResponder === second)
+        second.keyDown(with: key(48, "\t", modifiers: .shift, window: window))
+        XCTAssertTrue(window.firstResponder === first)
+        first.keyDown(with: key(48, "\t", window: window))
+        second.keyDown(with: key(49, " ", window: window))
+        second.keyDown(with: key(49, " ", repeatKey: true, window: window))
+        XCTAssertEqual(effects.actions, [.choose(sessionID: session, observationID: 2)])
+        XCTAssertFalse(first.acceptsFirstResponder)
+        XCTAssertFalse(first.canBecomeKeyView)
+        second.keyDown(with: key(48, "\t", window: window))
+        XCTAssertTrue(window.firstResponder === (try button("result-cancel", in: controller)))
+        XCTAssertTrue(try XCTUnwrap(second.accessibilityLabel()).contains("second"))
+    }
+
+    func testKeyboardTextReviewCopyAndClosePreserveOriginalAndCancelOnce() throws {
+        let (controller, effects) = makeController()
+        defer { controller.dismiss() }
+        let session = UUID(), original = "  e\u{301} 🧭\n尾\r\n"
+        controller.receive(.selecting(session))
+        controller.receive(.actionRequired(request(session: session, text: original, external: true)))
+        let window = try XCTUnwrap(controller.window)
+        let open = try button("result-open", in: controller)
+        XCTAssertEqual(open.keyEquivalent, "")
+        XCTAssertNil(window.defaultButtonCell)
+        XCTAssertTrue(window.makeFirstResponder(open))
+        for code in [UInt16(36), UInt16(76)] {
+            _ = window.performKeyEquivalent(with: key(code, "\r", window: window))
+            open.keyDown(with: key(code, "\r", window: window))
+        }
+        XCTAssertTrue(effects.actions.isEmpty)
+        let decoded = try text(in: controller)
+        XCTAssertTrue(window.makeFirstResponder(decoded))
+        XCTAssertTrue(decoded.performKeyEquivalent(with: key(0, "a", modifiers: .command, window: window)))
+        XCTAssertEqual(decoded.selectedRange(), NSRange(location: 0, length: decoded.string.utf16.count))
+        decoded.keyDown(with: key(48, "\t", window: window))
+        let copy = try button("result-copy", in: controller)
+        XCTAssertTrue(window.firstResponder === copy)
+        copy.keyDown(with: key(49, " ", window: window))
+        copy.keyDown(with: key(49, " ", repeatKey: true, window: window))
+        XCTAssertEqual(effects.copies.map { Array($0.utf8) }, [Array(original.utf8)])
+        XCTAssertTrue(effects.actions.isEmpty)
+        XCTAssertTrue(window.performKeyEquivalent(with: key(13, "w", modifiers: .command, window: window)))
+        window.close()
+        XCTAssertEqual(effects.actions, [.cancel(sessionID: session)])
+    }
+
+    func testFocusedChoiceScrollsIntoViewAndIncludesItsBoundedPreview() throws {
+        let (controller, _) = makeController()
+        defer { controller.dismiss() }
+        let session = UUID()
+        controller.receive(.selecting(session))
+        controller.receive(.choose(session, (1...30).map { item($0, "Synthetic result \($0)") }))
+        let window = try XCTUnwrap(controller.window)
+        window.contentView?.layoutSubtreeIfNeeded()
+        let last = try button("result-choose-30", in: controller)
+        XCTAssertTrue(window.makeFirstResponder(last))
+        let scroll = try XCTUnwrap(last.enclosingScrollView)
+        let document = try XCTUnwrap(scroll.documentView)
+        let focusedBounds = document.convert(last.bounds, from: last)
+        XCTAssertTrue(document.visibleRect.intersects(focusedBounds))
+        XCTAssertTrue(try XCTUnwrap(last.accessibilityLabel()).contains("Synthetic result 30"))
+    }
+
+    func testAnnouncementsDescribeStatusWithoutAutomaticallyReadingPayloads() throws {
+        let (controller, effects) = makeController()
+        defer { controller.dismiss() }
+        let session = UUID(), original = "file:///synthetic/private-text-雪"
+        controller.receive(.selecting(session))
+        controller.receive(.actionRequired(request(session: session, text: original)))
+        XCTAssertEqual(effects.announcements, ["Read this QR code as text"])
+        try button("result-copy", in: controller).performClick(nil)
+        try button("result-save", in: controller).performClick(nil)
+        effects.saveCompletions[0](nil)
+        XCTAssertEqual(Array(effects.announcements.suffix(3)),
+                       ["Copied.", "Choose where to save the text.", "Save cancelled."])
+        XCTAssertFalse(effects.announcements.joined().contains(original))
+        controller.dismiss()
+        let count = effects.announcements.count
+        controller.receive(.finished(session, .failed(.launchFailed, retainedText: original, documentURL: nil)))
+        XCTAssertEqual(effects.announcements.count, count)
+    }
+
+    func testAnnouncementReentrancyCannotDispatchOrPresentSaveForObsoleteResult() throws {
+        let (controller, effects) = makeController()
+        defer { controller.dismiss() }
+        let first = UUID(), second = UUID()
+        controller.receive(.selecting(first))
+        controller.receive(.actionRequired(request(session: first, text: "first", external: true)))
+        effects.onAnnouncement = { [weak controller] message in
+            guard message == "Working…" else { return }
+            controller?.receive(.selecting(second))
+            controller?.receive(.actionRequired(self.request(session: second, text: "second")))
+        }
+        try button("result-open", in: controller).performClick(nil)
+        XCTAssertTrue(effects.actions.isEmpty)
+        XCTAssertEqual(try text(in: controller).string, "second")
+        effects.onAnnouncement = { [weak controller] message in
+            if message == "Choose where to save the text." { controller?.dismiss() }
+        }
+        try button("result-save", in: controller).performClick(nil)
+        XCTAssertTrue(effects.saveCompletions.isEmpty)
+        XCTAssertTrue(effects.writes.isEmpty)
+    }
+
+    func testScanAnnouncementsUseDelayedProgressAndGenericTerminalStatus() {
+        let token = UUID(), original = "https://example.com/synthetic-private-value"
+        XCTAssertNotNil(AccessibilityAnnouncements.scanMessage(for: .selecting(token)))
+        XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .processing(token)))
+        XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .progress(token, isVisible: false)))
+        XCTAssertNotNil(AccessibilityAnnouncements.scanMessage(for: .progress(token, isVisible: true)))
+        XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .choose(token, [item(1, original)])))
+        XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .actionRequired(request(session: token, text: original))))
+        XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .finished(token, .failed(.launchFailed, retainedText: original, documentURL: nil))))
+        XCTAssertTrue(AccessibilityAnnouncements.scanMessage(for: .finished(token, .cancelled))?.contains("cancelled") == true)
+        XCTAssertEqual(AccessibilityAnnouncements.scanMessage(for: .finished(token, .handoffSucceeded)),
+                       "Sent to your default application.")
+    }
+
+    private func key(_ code: UInt16, _ characters: String, modifiers: NSEvent.ModifierFlags = [],
+                     repeatKey: Bool = false, window: NSWindow) -> NSEvent {
+        NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: modifiers, timestamp: 0,
+                        windowNumber: window.windowNumber, context: nil, characters: characters,
+                        charactersIgnoringModifiers: characters, isARepeat: repeatKey, keyCode: code)!
+    }
+
     private let saveURL = URL(fileURLWithPath: "/not-written/Scanned Text.txt")
     private func item(_ id: Int, _ text: String?) -> DecodedItem { DecodedItem(id: id, payload: text, bounds: .zero) }
 
@@ -269,7 +408,11 @@ import XCTest
     private func makeController() -> (ScanResultWindowController, ResultWindowEffects) {
         _ = NSApplication.shared
         let effects = ResultWindowEffects()
-        let controller = ScanResultWindowController(textActions: effects.boundaries, presentsWindows: false) {
+        let controller = ScanResultWindowController(textActions: effects.boundaries, presentsWindows: false,
+                                                   announce: { message in
+            effects.announcements.append(message)
+            effects.onAnnouncement?(message)
+        }) {
             effects.actions.append($0)
             effects.onAction?($0)
         }
@@ -308,6 +451,8 @@ import XCTest
     var onAction: ((ScanResultWindowController.Action) -> Void)?
     var onCopy: (() -> Void)?
     var onWrite: (() -> Void)?
+    var announcements: [String] = []
+    var onAnnouncement: ((String) -> Void)?
 
     var boundaries: ScanResultWindowController.TextActions {
         .init(copy: { text in
