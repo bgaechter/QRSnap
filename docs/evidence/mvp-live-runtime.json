@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-01",
+  "source_commit": "3aac5dc4d3cebe2f54e77674403111e05094625f",
+  "worktree": "/Users/benny/.codex/worktrees/mvp-live-validation/QRSnap",
+  "app_path": "/Users/benny/.codex/worktrees/mvp-live-validation/QRSnap/build/QRSnap.app",
+  "bundle_id": "local.benny.QRSnap",
+  "executable_sha256": "5d33c8e91bb3d4586651ed86583ab01eac1109d87f037d9d661649c831089c8b",
+  "cdhash": "df7112db4fd4813b44b4f985793075536940bd60",
+  "environment": {
+    "os": "macOS 26.5.2",
+    "os_build": "25F84",
+    "architecture": "arm64",
+    "swift": "6.3.3",
+    "developer_directory": "/Library/Developer/CommandLineTools"
+  },
+  "signature": {
+    "kind": "ad-hoc",
+    "strict_verification": "PASS",
+    "hardened_runtime": true,
+    "entitlements": {
+      "com.apple.security.app-sandbox": true,
+      "com.apple.security.files.user-selected.read-write": true
+    }
+  },
+  "automated_validation": {
+    "standalone_methods": 66,
+    "assertion_failures": 0,
+    "scope": "Independent mvp-readiness-review worktree at the same source commit; synthetic Vision and mocked side effects."
+  },
+  "runtime_checks": [
+    {
+      "check": "Launch current app without capture",
+      "result": "PASS",
+      "evidence": "Onboarding window appeared; no permission request until Scan was selected."
+    },
+    {
+      "check": "Missing screen permission and Cancel",
+      "result": "PASS",
+      "evidence": "Scan presented the explanation; Cancel returned to usable onboarding."
+    },
+    {
+      "check": "Settings keyboard navigation",
+      "result": "PASS",
+      "evidence": "Initial checkbox focus; Tab reached Record, Default, Apply, then wrapped to checkbox."
+    },
+    {
+      "check": "Shortcut recording cancellation",
+      "result": "PASS",
+      "evidence": "Space on Record started recording; Escape stopped it, retained Settings and restored Record focus. Saved shortcut stayed disabled."
+    }
+  ],
+  "pending": [
+    "Explicit authorization for this exact app to request screen access",
+    "Actual screen-to-default-app scans",
+    "Chooser and native recovery/Save flow",
+    "Wider manual OS/display/permission matrix",
+    "Release signing and notarization"
+  ],
+  "privacy": "No screenshot artifacts or decoded payload values are stored in this record."
+}
