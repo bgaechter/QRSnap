@@ -48,10 +48,10 @@ import AppKit
     /// only after the existing delayed-progress event, avoiding speech for quick scans.
     static func scanMessage(for event: ScanWorkflow.Event) -> String? {
         switch event {
-        case .selecting: return "Select the whole QR code, including its border. Escape cancels."
-        case .progress(_, true): return "Reading the selected area…"
-        case .finished(_, .cancelled): return "Scan cancelled. Ready to scan again."
-        case .finished(_, .handoffSucceeded): return "Sent to your default application."
+        case .selecting: return "Select the QR code and its border. Escape cancels."
+        case .progress(_, true): return "Reading QR code…"
+        case .finished(_, .cancelled): return "Scan cancelled."
+        case .finished(_, .handoffSucceeded): return "Sent to your default app."
         case .processing, .progress(_, false), .choose, .actionRequired, .finished(_, .failed): return nil
         }
     }

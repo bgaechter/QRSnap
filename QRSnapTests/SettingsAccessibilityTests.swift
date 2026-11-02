@@ -41,7 +41,7 @@ import XCTest
         XCTAssertEqual(fixture.settings.status, .unavailable(OSStatus(eventHotKeyExistsErr)))
         XCTAssertEqual(fixture.effects.applied, [.unavailable(OSStatus(eventHotKeyExistsErr))])
         XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("Shortcut unavailable"))
-        XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("Scan QR code… from the menu"))
+        XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("scan from the menu"))
         XCTAssertEqual(try label("settings-shortcut-status", in: fixture).stringValue, fixture.effects.announcements.last)
     }
 
@@ -69,7 +69,7 @@ import XCTest
         record.keyDown(with: key(49, " ", in: window))
         XCTAssertEqual(fixture.settings.status, .recording)
         XCTAssertEqual(fixture.monitor.installs, 1)
-        XCTAssertEqual(fixture.effects.announcements.last, "Press your shortcut now. Escape cancels.")
+        XCTAssertEqual(fixture.effects.announcements.last, "Press a shortcut. Escape cancels.")
         for id in ["settings-shortcut-enabled", "settings-default", "settings-apply"] {
             let disabled = try button(id, in: fixture)
             XCTAssertFalse(disabled.isEnabled)
@@ -100,7 +100,7 @@ import XCTest
         XCTAssertEqual(fixture.monitor.removals, 1)
         XCTAssertEqual(fixture.storage.loadShortcut().shortcut, .defaultShortcut)
         XCTAssertEqual(try label("settings-shortcut-value", in: fixture).stringValue, chosen.displayName)
-        XCTAssertEqual(fixture.effects.announcements.last, "\(chosen.displayName) selected. Apply to save your changes.")
+        XCTAssertEqual(fixture.effects.announcements.last, "\(chosen.displayName) selected. Apply to save.")
         XCTAssertTrue(window.performKeyEquivalent(with: key(36, "\r", in: window)))
         XCTAssertEqual(fixture.storage.loadShortcut(), ShortcutPreferences(enabled: true, shortcut: chosen))
         XCTAssertEqual(fixture.settings.status, .registered(chosen))
@@ -142,7 +142,7 @@ import XCTest
         defer { fixture.close() }
         let window = try XCTUnwrap(fixture.controller.window)
         try button("settings-default", in: fixture).keyDown(with: key(49, " ", in: window))
-        XCTAssertEqual(fixture.effects.announcements.last, "Default shortcut selected. Apply to save your changes.")
+        XCTAssertEqual(fixture.effects.announcements.last, "Default shortcut selected. Apply to save.")
         XCTAssertEqual(fixture.storage.loadShortcut(), original)
         XCTAssertTrue(window.performKeyEquivalent(with: key(36, "\r", in: window)))
         XCTAssertEqual(fixture.storage.loadShortcut(), ShortcutPreferences(enabled: true))

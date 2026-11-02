@@ -82,7 +82,7 @@ import XCTest
             let copy = try button("result-copy", in: controller)
             effects.copySucceeds = false
             copy.performClick(nil)
-            XCTAssertTrue(try label("result-status", in: controller).stringValue.contains("could not be copied"))
+            XCTAssertTrue(try label("result-status", in: controller).stringValue.contains("Could not copy"))
             effects.copySucceeds = true
             copy.performClick(nil)
             XCTAssertEqual(Array(effects.copies.suffix(2)), [original, original])
@@ -112,7 +112,7 @@ import XCTest
         save.performClick(nil)
         effects.writeFails = true
         effects.saveCompletions[1](saveURL)
-        XCTAssertTrue(try label("result-status", in: controller).stringValue.contains("could not be saved"))
+        XCTAssertTrue(try label("result-status", in: controller).stringValue.contains("Could not save"))
         XCTAssertTrue(save.isEnabled)
         save.performClick(nil)
         effects.writeFails = false
@@ -183,7 +183,7 @@ import XCTest
         retry.performClick(nil)
         retry.performClick(nil)
         XCTAssertEqual(effects.actions, [.retry(sessionID: first)])
-        XCTAssertEqual(try label("result-heading", in: controller).stringValue, "Unsupported QR payload")
+        XCTAssertEqual(try label("result-heading", in: controller).stringValue, "Unsupported QR code")
         XCTAssertNotNil(find("result-copy", in: controller))
         XCTAssertNotNil(find("result-save", in: controller))
         XCTAssertNotNil(find("result-retention", in: controller))
@@ -339,12 +339,12 @@ import XCTest
         let session = UUID(), original = "file:///synthetic/private-text-雪"
         controller.receive(.selecting(session))
         controller.receive(.actionRequired(request(session: session, text: original)))
-        XCTAssertEqual(effects.announcements, ["Read this QR code as text"])
+        XCTAssertEqual(effects.announcements, ["QR code text"])
         try button("result-copy", in: controller).performClick(nil)
         try button("result-save", in: controller).performClick(nil)
         effects.saveCompletions[0](nil)
         XCTAssertEqual(Array(effects.announcements.suffix(3)),
-                       ["Copied.", "Choose where to save the text.", "Save cancelled."])
+                       ["Copied.", "Choose a save location.", "Save cancelled."])
         XCTAssertFalse(effects.announcements.joined().contains(original))
         controller.dismiss()
         let count = effects.announcements.count
@@ -367,7 +367,7 @@ import XCTest
         XCTAssertTrue(effects.actions.isEmpty)
         XCTAssertEqual(try text(in: controller).string, "second")
         effects.onAnnouncement = { [weak controller] message in
-            if message == "Choose where to save the text." { controller?.dismiss() }
+            if message == "Choose a save location." { controller?.dismiss() }
         }
         try button("result-save", in: controller).performClick(nil)
         XCTAssertTrue(effects.saveCompletions.isEmpty)
@@ -385,7 +385,7 @@ import XCTest
         XCTAssertNil(AccessibilityAnnouncements.scanMessage(for: .finished(token, .failed(.launchFailed, retainedText: original, documentURL: nil))))
         XCTAssertTrue(AccessibilityAnnouncements.scanMessage(for: .finished(token, .cancelled))?.contains("cancelled") == true)
         XCTAssertEqual(AccessibilityAnnouncements.scanMessage(for: .finished(token, .handoffSucceeded)),
-                       "Sent to your default application.")
+                       "Sent to your default app.")
     }
 
     private func key(_ code: UInt16, _ characters: String, modifiers: NSEvent.ModifierFlags = [],

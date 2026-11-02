@@ -2,7 +2,7 @@
 
 ## Current integrated MVP smoke test
 
-The following checks are **NOT RUN** for the combined candidate in this Linux workspace. Automated CI exercises synthetic fixtures and injected OS boundaries; it does not replace these live checks. Record the exact commit, app identity, OS/architecture, display configuration and actual receiving application. Use a stable authorized binary and synthetic content displayed in another application; QRSnap excludes its own windows from capture.
+The user confirmed manual application live testing on 2 November 2026; basic live validation is complete. The [live record](mvp-live-runtime.md) documents that confirmation. The checklist below remains the detailed regression procedure; individual scenario results were not supplied. Automated CI covers synthetic fixtures and injected OS boundaries. Record the exact commit, app identity, OS/architecture, display configuration and actual receiving application. Use a stable authorized binary and synthetic content displayed in another application; QRSnap excludes its own windows from capture.
 
 | Check | Current procedure and expected result |
 | --- | --- |

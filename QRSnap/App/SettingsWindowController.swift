@@ -116,7 +116,7 @@ import Carbon
         let row = NSStackView(views: [label, record, reset])
         row.spacing = 12
         stack.addArrangedSubview(row)
-        addText("Include Control, Option or Command. Shortcut names show US keyboard positions; the same physical key is used after you change keyboard layouts. Keyboard capture runs only while recording in this window.", to: stack)
+        addText("Use Control, Option or Command. Keys follow US keyboard positions, even on other layouts.", to: stack)
         let status = addText("", to: stack)
         status.identifier = NSUserInterfaceItemIdentifier("settings-shortcut-status")
         status.setAccessibilityIdentifier("settings-shortcut-status")
@@ -128,12 +128,12 @@ import Carbon
         applyButton = apply
         stack.addArrangedSubview(apply)
 
-        let privacy = NSTextField(labelWithString: "Screen access and retained text")
+        let privacy = NSTextField(labelWithString: "Privacy")
         privacy.font = .systemFont(ofSize: 16, weight: .semibold)
         stack.addArrangedSubview(privacy)
-        addText("Screen access is requested when you start a scan. QRSnap captures your selected region in memory; it does not save screenshot files. After changing screen access in System Settings → Privacy & Security, you may need to quit and reopen QRSnap.", to: stack)
-        addText("Text opened as a document stays in QRSnap’s private Scanned Text folder until you remove it. Use Show scanned text files… from the menu to find it. Explicit Save… keeps a copy at the location you choose. Browsers and editors have their own history and retention policies.", to: stack)
-        addText("QRSnap has no analytics or app-originated network requests. Drag selection requires a pointing device; it is not fully accessible to nonvisual users.", to: stack)
+        addText("QRSnap asks for screen access when you scan. Screenshots stay in memory. Restart QRSnap if permission changes don’t take effect.", to: stack)
+        addText("Text files stay until you delete them. Find them with Show scanned text files… in the menu. Save… creates a copy wherever you choose.", to: stack)
+        addText("QRSnap sends no analytics or network requests. Browsers and editors may keep history. Selecting a QR code requires a mouse or trackpad.", to: stack)
         window.contentView = content
         KeyboardFocusLoop.install(in: window, views: [enabled, record, reset, apply])
         window.center()
@@ -172,13 +172,13 @@ import Carbon
 
     @objc private func changeEnabled() {
         draft.enabled = enabledButton?.state == .on
-        updateStatus("Apply to save your changes. " + settings.status.message)
+        updateStatus("Apply to save. " + settings.status.message)
     }
 
     @objc private func useDefault() {
         draft.shortcut = .defaultShortcut
         refresh()
-        updateStatus("Default shortcut selected. Apply to save your changes.")
+        updateStatus("Default shortcut selected. Apply to save.")
     }
 
     @objc private func applySettings() {
@@ -200,7 +200,7 @@ import Carbon
         refresh()
         onApply?(settings.status)
         if stopKeyMonitor != nil { updateStatus(settings.status.message) }
-        else { updateStatus("Shortcut recording could not start. Activate Settings and try again. " + settings.status.message) }
+        else { updateStatus("Could not record. Activate Settings and retry. " + settings.status.message) }
     }
 
     private func recordKey(keyCode: UInt16, flags: NSEvent.ModifierFlags, isRepeat: Bool) {
@@ -217,7 +217,7 @@ import Carbon
         } else {
             draft.shortcut = shortcut
             stopRecording()
-            var message = "\(shortcut.displayName) selected. Apply to save your changes."
+            var message = "\(shortcut.displayName) selected. Apply to save."
             if case .unavailable = settings.status { message += " " + settings.status.message }
             updateStatus(message)
         }

@@ -48,7 +48,7 @@ import AppKit
             outline.lineWidth = 2
             outline.stroke()
         }
-        let instruction = "Select the whole QR code, including its border. Escape cancels."
+        let instruction = "Select the QR code and its border. Escape cancels."
         instruction.draw(at: CGPoint(x: 28, y: 40), withAttributes: [
             .font: NSFont.systemFont(ofSize: 18, weight: .medium), .foregroundColor: NSColor.white
         ])
@@ -80,7 +80,7 @@ import AppKit
             panel.hidesOnDeactivate = false
             panel.isReleasedWhenClosed = false
             let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size))
-            view.setAccessibilityLabel("QR selection. Drag within one display. Press Escape to cancel.")
+            view.setAccessibilityLabel("QR selection. Drag within one display. Escape cancels.")
             view.onStart = { [weak self] in
                 guard let self, self.activeDisplay == nil else { return false }
                 self.activeDisplay = display.id
