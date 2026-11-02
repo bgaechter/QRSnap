@@ -30,7 +30,7 @@ Tests inject permission, selection, capture and application-launch side effects.
 
 [PR #12](https://github.com/bgaechter/QRSnap/pull/12) adds explicit keyboard navigation and accessibility announcements. [PR #13](https://github.com/bgaechter/QRSnap/pull/13) adds cancellation-aware decoding with queued-image release. Both were reviewed and merged on 23 October 2026, in dependency order. The combined candidate passed 66 standalone methods and 120 hosted XCTest methods, plus app and Release archive verification. See the [accessibility record](accessibility.md) and [decoder cancellation record](decoder-cancellation.md) for exact tested commits, run links, artifact metadata and evidence limits. The earlier implementation results above remain scoped to their recorded commit.
 
-## Runtime boundary
+## Historical implementation runtime boundary
 
 The prior [screen-permission runtime record](screen-permission-runtime.md) and [result-window runtime record](result-windows.md) establish named-host component behavior only. A live signed scan-to-default-app smoke test of this combined candidate is **NOT RUN** in this Linux environment. G0/G4/G6 are not declared accepted by compiling or passing mocked tests.
 
@@ -40,4 +40,4 @@ The wider OS/display/permission matrix, timing/memory, pointer-free selection/fu
 
 ## Current local follow-up
 
-[Live validation on 1 November 2026](mvp-live-runtime.md) records the exact integrated build, successful launch and keyboard checks, and its remaining screen-access prerequisite. The earlier Linux implementation evidence above remains scoped to its original environment and commit.
+[Live validation](mvp-live-runtime.md) records the 1 November build, launch and keyboard checks. On 2 November, the user confirmed successful manual live testing; the basic live-test prerequisite is complete. Wider compatibility and release checks remain separate. Earlier implementation evidence retains its original scope.

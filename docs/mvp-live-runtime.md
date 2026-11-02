@@ -1,4 +1,4 @@
-# Integrated MVP live validation — 1 November 2026
+# Integrated MVP live validation — updated 2 November 2026
 
 This record tests the integrated application from main commit `3aac5dc4d3cebe2f54e77674403111e05094625f`, including merged PRs #12 and #13. It supplements the earlier component records and does not replace their historical evidence.
 
@@ -10,7 +10,7 @@ This record tests the integrated application from main commit `3aac5dc4d3cebe2f5
 - Strict ad-hoc signature verification passed with App Sandbox, Hardened Runtime and the declared user-selected file entitlement. The declared deployment target remains macOS 14; this is not execution evidence for that OS.
 - [Machine-readable identity and observations](evidence/mvp-live-runtime.json) record the executable hash, CDHash and exact test scope.
 
-## Results so far
+## Results
 
 | Check | Result | Evidence boundary |
 | --- | --- | --- |
@@ -21,12 +21,14 @@ This record tests the integrated application from main commit `3aac5dc4d3cebe2f5
 | Settings keyboard loop | PASS | Tab traversed checkbox, Record, Default and Apply, then wrapped. Shift-Tab returned from checkbox to Apply. |
 | Recording cancellation | PASS | Space started local shortcut recording. Escape cancelled recording, kept Settings open and restored Record focus. Saved shortcut remained disabled. |
 | Settings close | PASS | Escape closed Settings without applying changes. |
-| Actual screen-to-default-app flow | NOT RUN | This exact ad-hoc build needs screen access. Explicit authorization for its permission request is pending. |
+| Application live test | PASS — user reported | On 2 November 2026, the user confirmed completing manual live testing. This closes the pending basic live-test prerequisite. |
 
-The synthetic HTTPS fixture is displayed in Preview. No screenshot files or decoded payload logs were created. No system default, privacy setting or launch-at-login setting was changed. The build remains fixed so subsequent permission and runtime checks refer to the same executable.
+The agent-run checks on 1 November used synthetic content and created no screenshot files or decoded payload logs. They changed no system defaults, privacy settings or launch-at-login settings. The binary above remains preserved.
 
-## Next live checks
+## Manual acceptance
 
-After authorization for this exact QRSnap build, verify actual capture and default-browser handoff, exact Unicode/multiline retained text, multiple-observation choice, explicit custom-destination confirmation, no-code Retry, cancellation and successful subsequent scans. Record observed receiving apps and file-byte comparisons separately from handoff callbacks. Native Save-sheet cancellation, shortcut invocation and keyboard behavior need their own observations.
+On 2 November 2026, the user confirmed that they had manually live tested the application and instructed that it be treated as live tested. Basic live validation is accepted on that basis. The earlier pending screen-access prerequisite is closed.
 
-G0/G4/G5 are not accepted from these startup checks. Wider hardware/OS coverage, 30-run timing and memory measurements, full VoiceOver, Developer ID signing, notarization and clean installation remain open as described in [manual verification](manual-tests.md).
+The user did not supply a scenario checklist, receiving-app details or a separate binary fingerprint for their run. The identity above belongs to the recorded 1 November candidate; this report does not invent additional measurements or per-scenario passes.
+
+Wider OS/display coverage, timing and memory measurements, full VoiceOver, Developer ID signing, notarization and clean installation remain separate checks in [manual verification](manual-tests.md).
