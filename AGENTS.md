@@ -18,6 +18,7 @@
 - Follow milestone dependencies. Independent core logic and tests may progress while G0 is open; do not describe production capture, routing integration or release gates as accepted without runtime evidence.
 - Distinguish compilation, synthetic fixture tests, mocked side-effect tests, signed GUI runtime checks and release validation. Record NOT RUN for missing environments.
 - Use synthetic QR content and harmless example URLs. Keep screenshots in memory and payloads out of logs. Do not change system defaults, privacy settings or launch-at-login settings to make tests pass.
+- Keep README and user-facing app text concise. Put development diagnostics and detailed validation evidence in docs, not product copy.
 - Keep this file current when the user changes the working style. User instructions in the active conversation take precedence.
 
 ## Local development
