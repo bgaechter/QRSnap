@@ -125,7 +125,7 @@ import UniformTypeIdentifiers
                 // Flatten only the bounded preview; Copy/Save retain the untouched original.
                 let excerpt = payload.prefix(160).split(whereSeparator: \.isWhitespace).joined(separator: " ")
                 preview = payload.isEmpty ? "Empty text" : (excerpt.isEmpty ? "Whitespace text" : excerpt) + (payload.count > 160 ? "…" : "")
-            } else { preview = "Unsupported: no text payload" }
+            } else { preview = "Unsupported: no text" }
             let label = makeLabel("QR \(index + 1): \(preview)", id: "result-choice-label-\(item.id)")
             let choose = button("Choose", id: "result-choose-\(item.id)", label: "Choose QR code \(index + 1): \(preview)") { [weak self] in
                 self?.send(.choose(sessionID: token, observationID: item.id), presentationID: current.id)
@@ -141,7 +141,7 @@ import UniformTypeIdentifiers
         }
         let scroll = choiceScroll(rows)
         let cancel = cancelButton(current)
-        show(current, heading: "Choose a QR code", detail: "Choose one result to continue. Tab moves between results; Space chooses the focused result. Each detected code is listed separately.",
+        show(current, heading: "Choose a QR code", detail: "Tab to move; Space to choose.",
              body: scroll, buttons: [cancel], initialFocus: cancel)
     }
 
@@ -151,8 +151,8 @@ import UniformTypeIdentifiers
         var buttons: [NSButton] = []
         switch request.kind {
         case .confirmExternal(let url, let handler):
-            heading = "Open this destination?"
-            detail = "The destination below will open in \(handler.name)."
+            heading = "Open this link?"
+            detail = "Opens in \(handler.name)."
             displayedText = url.absoluteString
             let open = button("Open", id: "result-open", label: "Open destination in \(handler.name)") { [weak self] in
                 self?.send(.confirm(requestID: request.id), presentationID: current.id)
@@ -161,8 +161,8 @@ import UniformTypeIdentifiers
             consumingButtons.append(open)
             buttons.append(open)
         case .openBlockedAsText:
-            heading = "Read this QR code as text"
-            detail = "This type of destination is not opened directly. You can copy or save its text, or open a text document."
+            heading = "QR code text"
+            detail = "This link cannot open directly. Copy, save or open it as text."
             displayedText = request.observation.payload ?? ""
         }
         if current.text != nil {
@@ -175,7 +175,7 @@ import UniformTypeIdentifiers
         }
         buttons.append(cancelButton(current))
         show(current, heading: heading, detail: detail, body: textView(displayedText), buttons: buttons,
-             note: "Text documents opened by QRSnap are kept until you remove them.")
+             note: "Text files stay until you delete them.")
     }
 
     private func showFailure(_ failure: ScanFailure, text: String?, documentURL: URL?, token: UUID) {
@@ -191,7 +191,7 @@ import UniformTypeIdentifiers
         if text != nil { buttons += textButtons(current) }
         buttons.append(cancelButton(current))
         show(current, heading: message.0, detail: message.1, body: text.map(textView), buttons: buttons,
-             note: documentURL == nil ? nil : "The text document already created is retained until you remove it.")
+             note: documentURL == nil ? nil : "This text file stays until you delete it.")
     }
 
     private func beginPresentation(token: UUID, text: String?, terminal: Bool) -> Presentation? {
@@ -290,7 +290,7 @@ import UniformTypeIdentifiers
         let copy = button("Copy", id: "result-copy", key: "c", modifiers: .command) { [weak self] in
             guard let self, self.isCurrent(current.id), let text = self.presentation?.text else { return }
             let copied = self.textActions.copy(text)
-            self.updateStatus(copied ? "Copied." : "The text could not be copied. Try again.", for: current.id)
+            self.updateStatus(copied ? "Copied." : "Could not copy. Try again.", for: current.id)
         }
         let save = button("Save…", id: "result-save", key: "s", modifiers: .command) { [weak self] in
             self?.save(current.id)
@@ -305,7 +305,7 @@ import UniformTypeIdentifiers
         let attempt = UUID()
         current.saveAttempt = attempt
         saveButton?.isEnabled = false
-        updateStatus("Choose where to save the text.", for: id)
+        updateStatus("Choose a save location.", for: id)
         guard isCurrent(id), current.saveAttempt == attempt else { return }
         let cancelDialog = textActions.chooseSaveURL(window) { [weak self] url in
             guard let self, let active = self.presentation, active.id == id, active.saveAttempt == attempt else { return }
@@ -319,7 +319,7 @@ import UniformTypeIdentifiers
                 try self.textActions.write(text, url)
                 self.updateStatus("Saved.", for: id)
             } catch {
-                self.updateStatus("The text could not be saved. Choose another location or try again.", for: id)
+                self.updateStatus("Could not save. Try another location.", for: id)
             }
         }
         if isCurrent(id), current.saveAttempt == attempt { current.cancelSave = cancelDialog }
@@ -424,18 +424,18 @@ import UniformTypeIdentifiers
 
     private func failureMessage(_ failure: ScanFailure) -> (String, String) {
         switch failure {
-        case .noQR: return ("No QR code found", "Select the whole QR code, including its border, then try again.")
-        case .unsupportedPayload: return ("Unsupported QR payload", "This QR code has no supported text payload, or its text exceeds the supported size.")
-        case .permissionUnavailable: return ("Screen access unavailable", "Check screen access in System Settings. You may need to quit and reopen QRSnap before retrying.")
-        case .displayChanged: return ("The display arrangement changed", "Start a new selection on a connected display.")
-        case .invalidSelection, .selectionTooSmall: return ("Select a larger area", "Select at least 12 × 12 points and include the whole QR code and its border.")
-        case .regionTooLarge: return ("Select a smaller area", "The selected region exceeds the capture size limit.")
-        case .timedOut: return ("The scan took too long", "Try selecting a smaller area, then retry.")
-        case .captureFailed: return ("The screen could not be captured", "Check screen access and the display arrangement, then retry.")
-        case .decodeFailed: return ("The image could not be read", "Try selecting the whole QR code again.")
-        case .handlerUnavailable: return ("No application is available", "The default application could not be found. You can copy or save any retained text below.")
-        case .fileWriteFailed: return ("The text document could not be created", "Your decoded text is retained below. Copy it or save it to a location you choose.")
-        case .launchFailed: return ("The destination could not be opened", "You can copy or save any retained text below, or retry the scan.")
+        case .noQR: return ("No QR code found", "Include the whole code and its border, then retry.")
+        case .unsupportedPayload: return ("Unsupported QR code", "This code has no readable text, or its text is too large.")
+        case .permissionUnavailable: return ("Screen access unavailable", "Check screen access in System Settings. Restart QRSnap if needed.")
+        case .displayChanged: return ("Displays changed", "Select the QR code again.")
+        case .invalidSelection, .selectionTooSmall: return ("Select a larger area", "Include the whole QR code and its border.")
+        case .regionTooLarge: return ("Select a smaller area", "Keep the selection close to the QR code.")
+        case .timedOut: return ("Scan timed out", "Try a smaller selection.")
+        case .captureFailed: return ("Could not capture the screen", "Check screen access, then retry.")
+        case .decodeFailed: return ("Could not read the QR code", "Select the whole code again.")
+        case .handlerUnavailable: return ("No app available", "No default app was found. Copy or save the text below.")
+        case .fileWriteFailed: return ("Could not create a text file", "Copy or save your text below.")
+        case .launchFailed: return ("Could not open the result", "Copy or save the text below, or retry.")
         }
     }
 }

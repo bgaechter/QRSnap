@@ -58,7 +58,7 @@ import XCTest
         let result = settings.apply(ShortcutPreferences(enabled: true))
         XCTAssertEqual(result, .unavailable(OSStatus(eventHotKeyExistsErr)))
         XCTAssertFalse(settings.status.isRegistered)
-        XCTAssertTrue(result.message.contains("Scan QR code… from the menu"))
+        XCTAssertTrue(result.message.contains("scan from the menu"))
         XCTAssertTrue(storage.loadShortcut().enabled)
         fake.onInvoke?()
         XCTAssertEqual(invocations, 0)
@@ -194,7 +194,7 @@ import XCTest
         XCTAssertEqual(applied, .unavailable(OSStatus(eventHotKeyExistsErr)))
         let status = try XCTUnwrap(find("settings-shortcut-status", in: controller.window?.contentView) as? NSTextField)
         XCTAssertTrue(status.stringValue.contains("Shortcut unavailable"))
-        XCTAssertTrue(status.stringValue.contains("Scan QR code… from the menu"))
+        XCTAssertTrue(status.stringValue.contains("scan from the menu"))
         XCTAssertTrue(storage.loadShortcut().enabled)
     }
 

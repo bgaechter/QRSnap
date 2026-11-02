@@ -44,10 +44,10 @@ import AppKit
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = NSImage(systemSymbolName: "qrcode.viewfinder", accessibilityDescription: "QRSnap")
-        statusItem.button?.toolTip = "QRSnap — scan a QR code from your screen"
+        statusItem.button?.toolTip = "QRSnap — scan on-screen QR codes"
         let menu = NSMenu()
         add("Scan QR code…", #selector(scan), to: menu)
-        add("Cancel current scan", #selector(cancelScan), to: menu)
+        add("Cancel scan", #selector(cancelScan), to: menu)
         menu.addItem(.separator())
         add("Open QRSnap…", #selector(showMainWindow), to: menu)
         add("Settings…", #selector(showSettings), to: menu)
@@ -84,11 +84,11 @@ import AppKit
         window.title = "QRSnap"
         window.minSize = NSSize(width: 560, height: 540)
         window.isReleasedWhenClosed = false
-        let title = NSTextField(wrappingLabelWithString: "Read a QR code from your screen")
+        let title = NSTextField(wrappingLabelWithString: "Scan a QR code")
         title.font = .systemFont(ofSize: 23, weight: .semibold)
-        let detail = NSTextField(wrappingLabelWithString: "Choose Scan, then drag around a QR code in another app. Include its border. Press Escape to cancel.")
-        let policy = NSTextField(wrappingLabelWithString: "Web links open in your default browser. Text opens in your default text app. Other app links ask for confirmation, and multiple codes let you choose one.")
-        let privacy = NSTextField(wrappingLabelWithString: "Screen images stay in memory. Text documents opened by QRSnap are kept until you remove them. Copy and Save happen only when you choose them.")
+        let detail = NSTextField(wrappingLabelWithString: "Drag around a QR code in another app, including its border. Escape cancels.")
+        let policy = NSTextField(wrappingLabelWithString: "Web links and text open in your default apps. Other app links ask first.")
+        let privacy = NSTextField(wrappingLabelWithString: "Screenshots stay in memory. Text files stay until you delete them.")
         privacy.textColor = .secondaryLabelColor
         let scan = KeyboardAccessibleButton(title: "Scan QR code…", target: self, action: #selector(scan))
         scan.bezelStyle = .rounded
@@ -102,7 +102,7 @@ import AppKit
         actions.spacing = 8
         let shortcut = NSTextField(wrappingLabelWithString: "")
         shortcutLabel = shortcut
-        let status = NSTextField(wrappingLabelWithString: "Ready to scan. Screen access is requested only when you continue.")
+        let status = NSTextField(wrappingLabelWithString: "Ready to scan.")
         status.textColor = .secondaryLabelColor
         status.setAccessibilityLabel("Scan status")
         statusLabel = status
@@ -155,19 +155,19 @@ import AppKit
         permissionPromptOpen = true
         defer { permissionPromptOpen = false }
         let prompt = NSAlert()
-        prompt.messageText = permission.isGranted ? "Screen access is enabled" : "Allow screen access to scan a QR code"
-        prompt.informativeText = "QRSnap reads only the area you select, on demand. It does not save screen images or record continuously. Manage access in System Settings → Privacy & Security → Screen & System Audio Recording. After changing access, you may need to quit and reopen this exact app, then choose Scan again."
+        prompt.messageText = permission.isGranted ? "Screen access is enabled" : "Allow screen access"
+        prompt.informativeText = "QRSnap reads the area you select without saving screenshots. Manage access in System Settings → Privacy & Security → Screen & System Audio Recording. Restart QRSnap if needed."
         if permission.isGranted {
             prompt.addButton(withTitle: "OK")
         } else {
-            prompt.addButton(withTitle: "Continue to macOS permission")
+            prompt.addButton(withTitle: "Continue")
             prompt.addButton(withTitle: "Cancel")
         }
         NSApp.activate(ignoringOtherApps: true)
         let grantedBeforePrompt = permission.isGranted
         if prompt.runModal() == .alertFirstButtonReturn, !grantedBeforePrompt {
             _ = permission.request()
-            statusLabel?.stringValue = "Review screen access in System Settings, then choose Scan again. A relaunch may be required."
+            statusLabel?.stringValue = "Check screen access in System Settings, then retry. Restart QRSnap if needed."
         }
     }
 
@@ -178,13 +178,13 @@ import AppKit
         let message: String
         switch event {
         case .selecting: message = "Drag around a QR code. Escape cancels."
-        case .processing: message = "Reading the selected area…"
+        case .processing: message = "Reading QR code…"
         case .progress: return
-        case .choose: message = "Choose one of the detected QR codes."
-        case .actionRequired: message = "Review the destination or choose a text action."
-        case .finished(_, .handoffSucceeded): message = "Sent to your default application."
-        case .finished(_, .cancelled): message = "Scan cancelled. Ready to scan again."
-        case .finished(_, .failed): message = "The scan could not finish. Review the recovery window or try again."
+        case .choose: message = "Choose a QR code."
+        case .actionRequired: message = "Review the result."
+        case .finished(_, .handoffSucceeded): message = "Sent to your default app."
+        case .finished(_, .cancelled): message = "Scan cancelled."
+        case .finished(_, .failed): message = "Scan failed. Check the result window or retry."
         }
         statusLabel?.stringValue = message
         if let statusLabel { NSAccessibility.post(element: statusLabel, notification: .valueChanged) }
@@ -213,7 +213,7 @@ import AppKit
             guard let self, self.scanner.sessionID == token else { return }
             self.scanner.cancel()
         }
-        let label = NSTextField(labelWithString: "Reading the selected area…")
+        let label = NSTextField(labelWithString: "Reading QR code…")
         let cancel = KeyboardAccessibleButton(title: "Cancel", target: panel, action: #selector(ScanProgressPanel.cancelPressed))
         cancel.bezelStyle = .rounded
         cancel.keyEquivalent = "\u{1b}"
@@ -247,11 +247,11 @@ import AppKit
             try FileManager.default.createDirectory(at: textDirectory, withIntermediateDirectories: true,
                                                     attributes: [.posixPermissions: 0o700])
             NSWorkspace.shared.activateFileViewerSelecting([textDirectory])
-        } catch { message("Folder unavailable", "The scanned-text folder could not be opened.") }
+        } catch { message("Folder unavailable", "Could not open the scanned text folder.") }
     }
 
     @objc private func about() {
-        message("QRSnap", "Select a QR code on your screen and open its contents with your default application. Requires macOS 14 or later.\n\nScreen images remain in memory; opened text documents stay until you remove them. No analytics or app-originated network requests. Drag selection requires a pointer.\n\nMIT License · QRSnap contributors")
+        message("QRSnap", "Scan on-screen QR codes and open them in your default apps.\n\nmacOS 14 or later · MIT License\nQRSnap contributors")
     }
 
     private func message(_ title: String, _ detail: String) {

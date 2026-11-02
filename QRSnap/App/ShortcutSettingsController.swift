@@ -20,11 +20,11 @@ enum ShortcutRegistrationStatus: Equatable {
 
     var message: String {
         switch self {
-        case .disabled: return "Global shortcut is off. Use Scan QR code… from the menu."
-        case .registered(let shortcut): return "\(shortcut.displayName) is registered. Some system or application conflicts may still take precedence."
-        case .unavailable(let status): return "Shortcut unavailable (status \(status)). Another app or macOS may reserve it. Choose another shortcut or use Scan QR code… from the menu."
+        case .disabled: return "Shortcut off. Scan from the menu."
+        case .registered(let shortcut): return "\(shortcut.displayName) enabled."
+        case .unavailable: return "Shortcut unavailable. Choose another or scan from the menu."
         case .invalidShortcut(let reason): return reason
-        case .recording: return "Press your shortcut now. Escape cancels."
+        case .recording: return "Press a shortcut. Escape cancels."
         }
     }
 }

@@ -100,7 +100,7 @@ import XCTest
         XCTAssertEqual(fixture.monitor.removals, 1)
         XCTAssertEqual(fixture.storage.loadShortcut().shortcut, .defaultShortcut)
         XCTAssertEqual(try label("settings-shortcut-value", in: fixture).stringValue, chosen.displayName)
-        XCTAssertEqual(fixture.effects.announcements.last, "\(chosen.displayName) selected. Apply to save your changes.")
+        XCTAssertEqual(fixture.effects.announcements.last, "\(chosen.displayName) selected. Apply to save.")
         XCTAssertTrue(window.performKeyEquivalent(with: key(36, "\r", in: window)))
         XCTAssertEqual(fixture.storage.loadShortcut(), ShortcutPreferences(enabled: true, shortcut: chosen))
         XCTAssertEqual(fixture.settings.status, .registered(chosen))
@@ -142,7 +142,7 @@ import XCTest
         defer { fixture.close() }
         let window = try XCTUnwrap(fixture.controller.window)
         try button("settings-default", in: fixture).keyDown(with: key(49, " ", in: window))
-        XCTAssertEqual(fixture.effects.announcements.last, "Default shortcut selected. Apply to save your changes.")
+        XCTAssertEqual(fixture.effects.announcements.last, "Default shortcut selected. Apply to save.")
         XCTAssertEqual(fixture.storage.loadShortcut(), original)
         XCTAssertTrue(window.performKeyEquivalent(with: key(36, "\r", in: window)))
         XCTAssertEqual(fixture.storage.loadShortcut(), ShortcutPreferences(enabled: true))

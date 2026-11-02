@@ -13,11 +13,11 @@ struct KeyboardShortcut: Codable, Equatable, Sendable {
         guard Self.keyNames[keyCode] != nil else { return "Choose a letter, number, punctuation, arrow, Space or function key." }
         guard modifiers & ~Self.allowedModifiers == 0,
               modifiers & UInt32(controlKey | optionKey | cmdKey) != 0 else {
-            return "Include Control, Option or Command. Shift alone is not enough."
+            return "Add Control, Option or Command."
         }
         // Never take over the system's screenshot keys, including variants with extra modifiers.
         if [UInt32(20), 21, 23].contains(keyCode), modifiers & UInt32(cmdKey | shiftKey) == UInt32(cmdKey | shiftKey) {
-            return "Choose a shortcut other than a macOS screenshot shortcut."
+            return "Choose a different shortcut; macOS uses this for screenshots."
         }
         return nil
     }
