@@ -41,7 +41,7 @@ import XCTest
         XCTAssertEqual(fixture.settings.status, .unavailable(OSStatus(eventHotKeyExistsErr)))
         XCTAssertEqual(fixture.effects.applied, [.unavailable(OSStatus(eventHotKeyExistsErr))])
         XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("Shortcut unavailable"))
-        XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("Scan QR code… from the menu"))
+        XCTAssertTrue(try XCTUnwrap(fixture.effects.announcements.last).contains("scan from the menu"))
         XCTAssertEqual(try label("settings-shortcut-status", in: fixture).stringValue, fixture.effects.announcements.last)
     }
 
@@ -69,7 +69,7 @@ import XCTest
         record.keyDown(with: key(49, " ", in: window))
         XCTAssertEqual(fixture.settings.status, .recording)
         XCTAssertEqual(fixture.monitor.installs, 1)
-        XCTAssertEqual(fixture.effects.announcements.last, "Press your shortcut now. Escape cancels.")
+        XCTAssertEqual(fixture.effects.announcements.last, "Press a shortcut. Escape cancels.")
         for id in ["settings-shortcut-enabled", "settings-default", "settings-apply"] {
             let disabled = try button(id, in: fixture)
             XCTAssertFalse(disabled.isEnabled)
